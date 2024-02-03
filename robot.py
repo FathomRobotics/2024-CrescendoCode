@@ -4,8 +4,16 @@
 # Open Source Software; you can modify and/or share it under the terms of
 # the WPILib BSD license file in the root directory of this project.
 #
+import threading
+import time
+
+import cscore
+import navx
+import ntcore
 import phoenix5
 import wpilib
+import wpilib.drive
+import wpimath.geometry
 
 
 class MyRobot(wpilib.TimedRobot):
@@ -19,49 +27,58 @@ class MyRobot(wpilib.TimedRobot):
 
     def robotInit(self):
         """Robot initialization function"""
-        self.frontLeftMotor = phoenix5.TalonSRX(1)
-        self.rearLeftMotor = phoenix5.TalonSRX(3)
-        self.frontRightMotor = phoenix5.TalonSRX(2)
-        self.rearRightMotor = phoenix5.TalonSRX(4)
+
+        cscore.CameraServer.startAutomaticCapture()
+
+        self.frontLeftMotor = phoenix5.WPI_TalonSRX(1)
+        self.rearLeftMotor = phoenix5.WPI_TalonSRX(3)
+        self.frontRightMotor = phoenix5.WPI_TalonSRX(2)
+        self.rearRightMotor = phoenix5.WPI_TalonSRX(4)
 
         # invert the left side motors
         self.frontLeftMotor.setInverted(True)
 
+        # Gyro
+        self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
+        self.gyro.isConnected()
+        gyroThread = threading.Thread(target=self.resetGryoThread)
+        gyroThread.run()
+        inst = ntcore.NetworkTableInstance.getDefault()
+        table = inst.getTable("SmartDashboard")
+        self.GyroPub = table.getDoubleTopic("Gyro").publish()
+        self.GryoConnected = table.getBooleanTopic("GyroConnected").publish()
+        self.GryoConnected.set(False)
+
         # you may need to change or remove this to match your robot
         self.rearLeftMotor.setInverted(True)
 
-        # self.drive = MecanumDrive(
-        #     self.frontLeftMotor,
-        #     self.rearLeftMotor,
-        #     self.frontRightMotor,
-        #     self.rearRightMotor,
-        # )
+        self.drive = wpilib.drive.MecanumDrive(
+            self.frontLeftMotor,
+            self.rearLeftMotor,
+            self.frontRightMotor,
+            self.rearRightMotor,
+        )
+        self.f2d = wpilib.Field2d()
         # Define the Xbox Controller.
         self.stick = wpilib.XboxController(self.joystickChannel)
+
+    def resetGryoThread(self):
+        time.sleep(1)
+        self.gyro.reset()
 
     def teleopInit(self):
         pass
 
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
-        # Use the joystick X axis for lateral movement, Y axis for forward movement, and Z axis for rotation.
-        # This sample does not use field-oriented drive, so the gyro input is set to zero.
-        # This Stick configuration is created by K.E. on our team.  Left stick Y axis is speed, Left Stick X axis is strafe, and Right Stick Y axis is turn.
+        self.GyroPub.set(self.gyro.getAngle())
+        self.GryoConnected.set(self.gyro.isConnected())
+
         y = -self.stick.getLeftY()
-        x = self.stick.getLeftX()
+        x = -self.stick.getLeftX()
         rx = -self.stick.getRightX()
 
-        divisor = max(abs(y) + abs(x) + abs(rx), 1)
-
-        frontLeftPower = (y + x + rx) / divisor
-        backLeftPower = (y - x + rx) / divisor
-        frontRightPower = (y - x - rx) / divisor
-        backRightPower = (y + x - rx) / divisor
-
-        self.frontLeftMotor.set(mode=phoenix5.ControlMode.PercentOutput, value=frontLeftPower)
-        self.rearLeftMotor.set(mode=phoenix5.ControlMode.PercentOutput, value=backLeftPower)
-        self.frontRightMotor.set(mode=phoenix5.ControlMode.PercentOutput, value=frontRightPower)
-        self.rearRightMotor.set(mode=phoenix5.ControlMode.PercentOutput, value=backRightPower)
+        self.drive.driveCartesian(x, y, rx, -self.gyro.getRotation2d())
 
         """Alternatively, to match the driver station enumeration, you may use  ---> self.drive.driveCartesian(
             self.stick.getRawAxis(1), self.stick.getRawAxis(3), self.stick.getRawAxis(2), 0
