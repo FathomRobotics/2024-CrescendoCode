@@ -16,7 +16,7 @@ This will install the Python library named robotpy, the library FRC teams have b
 Now that we have installed robotpy, we need to install [OpenCV](https://pypi.org/project/opencv-python/) and [numpy](https://numpy.org/install/). The following terminal command will install OpenCV:
 `python -m pip install opencv-python`
 The following terminal command will install numpy **(using pip)**:
-`pip install numpy`
+`python -m pip install numpy`
 The following terminal command will install numpy **(using anaconda)**:
 `conda install numpy`
 ## Contribution Workflow
