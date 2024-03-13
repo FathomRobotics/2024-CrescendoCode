@@ -11,9 +11,10 @@ import cscore
 import navx
 import ntcore
 import phoenix5
+import phoenix5.sensors
+import rev
 import wpilib
 import wpilib.drive
-import wpimath.geometry
 
 
 class MyRobot(wpilib.TimedRobot):
@@ -30,16 +31,22 @@ class MyRobot(wpilib.TimedRobot):
 
         cscore.CameraServer.startAutomaticCapture()
 
-        self.frontLeftMotor = phoenix5.WPI_TalonSRX(1)
-        self.rearLeftMotor = phoenix5.WPI_TalonSRX(3)
-        self.frontRightMotor = phoenix5.WPI_TalonSRX(2)
-        self.rearRightMotor = phoenix5.WPI_TalonSRX(4)
+        self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
+        self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
+        self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
+        self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
+
+        # self.frontLeftMotorEncoder = rev.RelativeEncoder()
+        # self.rearLeftMotorEncoder = rev.RelativeEncoder()
+        # self.frontRightMotorEncoder = rev.RelativeEncoder()
+        # self.rearRightMotorEncoder = rev.RelativeEncoder()
 
         # invert the left side motors
         self.frontLeftMotor.setInverted(True)
 
         # Gyro
         self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
+        self.pidgen = phoenix5.sensors.Pigeon2(5)
         self.gyro.isConnected()
         gyroThread = threading.Thread(target=self.resetGryoThread)
         gyroThread.run()
@@ -47,6 +54,8 @@ class MyRobot(wpilib.TimedRobot):
         table = inst.getTable("SmartDashboard")
         self.GyroPub = table.getDoubleTopic("Gyro").publish()
         self.GryoConnected = table.getBooleanTopic("GyroConnected").publish()
+        self.PidgeonCompass = table.getDoubleTopic("PidgeonCompass").publish()
+        self.PidgeonCompass.set(self.pidgen.getCompassHeading())
         self.GryoConnected.set(False)
 
         # you may need to change or remove this to match your robot
@@ -71,6 +80,7 @@ class MyRobot(wpilib.TimedRobot):
 
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
+        self.PidgeonCompass.set(self.pidgen.getCompassHeading())
         self.GyroPub.set(self.gyro.getAngle())
         self.GryoConnected.set(self.gyro.isConnected())
 
