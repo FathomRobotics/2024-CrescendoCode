@@ -16,9 +16,16 @@ This will install the Python library named robotpy, the library FRC teams have b
 Now that we have installed robotpy, we need to install [OpenCV](https://pypi.org/project/opencv-python/) and [numpy](https://numpy.org/install/). The following terminal command will install OpenCV:
 `python -m pip install opencv-python`
 The following terminal command will install numpy **(using pip)**:
-`pip install numpy`
+`python -m pip install numpy`
 The following terminal command will install numpy **(using anaconda)**:
 `conda install numpy`
+### Deploying Code
+You can find the instructions on how to deploy code in Python to the robot [here](https://docs.wpilib.org/en/stable/docs/software/python/subcommands/deploy.html).
+> Note: Make sure that you run `robotpy sync` before you deploy code. If this command doesn't work, try `python -m robotpy sync`.
+
+To download the code, do not download the ZIP file. Download (Github Desktop)(https://docs.github.com/en/desktop/installing-and-authenticating-to-github-desktop/installing-github-desktop) and clone the repository by clicking "Open with Github Desktop":
+![OpenWithGithub](https://github.com/FathomRobotics/2024-Crescendo-Code/assets/57422635/f731b349-736d-4f0f-adf2-d446de459334)
+
 ## Contribution Workflow
 There are 5 easy steps to contributing!
 1. Find an issue to fix
