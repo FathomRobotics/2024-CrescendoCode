@@ -4,10 +4,10 @@
 # Open Source Software; you can modify and/or share it under the terms of
 # the WPILib BSD license file in the root directory of this project.
 #
+import math
 import threading
 import time
 
-import cscore
 import navx
 import ntcore
 import phoenix5
@@ -25,16 +25,23 @@ class MyRobot(wpilib.TimedRobot):
 
     # The channel on the driver station that the joystick is connected to
     joystickChannel = 0
+    joystickChannel2 = 1
 
     def robotInit(self):
         """Robot initialization function"""
 
-        cscore.CameraServer.startAutomaticCapture()
+        # cscore.CameraServer.startAutomaticCapture()
 
         self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
         self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
         self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
+
+        self.intake = rev.CANSparkMax(7, type=rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.arm = rev.CANSparkMax(8, type=rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.wrist = rev.CANSparkMax(9, type=rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.shooter = rev.CANSparkMax(10, type=rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.shooterEncoder = self.shooter.getEncoder()
 
         # self.frontLeftMotorEncoder = rev.RelativeEncoder()
         # self.rearLeftMotorEncoder = rev.RelativeEncoder()
@@ -55,6 +62,7 @@ class MyRobot(wpilib.TimedRobot):
         self.GyroPub = table.getDoubleTopic("Gyro").publish()
         self.GryoConnected = table.getBooleanTopic("GyroConnected").publish()
         self.PidgeonCompass = table.getDoubleTopic("PidgeonCompass").publish()
+        self.testRPM = table.getDoubleTopic("TestRPM").publish()
         self.PidgeonCompass.set(self.pidgen.getCompassHeading())
         self.GryoConnected.set(False)
 
@@ -70,6 +78,7 @@ class MyRobot(wpilib.TimedRobot):
         self.f2d = wpilib.Field2d()
         # Define the Xbox Controller.
         self.stick = wpilib.XboxController(self.joystickChannel)
+        self.stick2 = wpilib.XboxController(self.joystickChannel2)
 
     def resetGryoThread(self):
         time.sleep(1)
@@ -88,7 +97,17 @@ class MyRobot(wpilib.TimedRobot):
         x = -self.stick.getLeftX()
         rx = -self.stick.getRightX()
 
-        self.drive.driveCartesian(x, y, rx, -self.gyro.getRotation2d())
+        Idiot_y = math.pow(y, 3)
+        Idiot_x = math.pow(x, 3)
+        Idiot_rx = math.pow(rx, 3)
+        self.testRPM.set(self.shooterEncoder.getVelocity())
+
+        self.drive.driveCartesian(Idiot_x, Idiot_y, Idiot_rx, -self.gyro.getRotation2d())
+
+        self.intake.set(-self.stick.getRightTriggerAxis())
+        self.arm.set(self.stick2.getRightY())
+        self.wrist.set(self.stick2.getLeftY())
+        self.shooter.set(self.stick.getLeftTriggerAxis())
 
         """Alternatively, to match the driver station enumeration, you may use  ---> self.drive.driveCartesian(
             self.stick.getRawAxis(1), self.stick.getRawAxis(3), self.stick.getRawAxis(2), 0
