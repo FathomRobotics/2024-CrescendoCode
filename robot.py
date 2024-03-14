@@ -43,16 +43,17 @@ class MyRobot(wpilib.TimedRobot):
         self.shooter = rev.CANSparkMax(10, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.shooterEncoder = self.shooter.getEncoder()
 
-        # self.frontLeftMotorEncoder = rev.RelativeEncoder()
-        # self.rearLeftMotorEncoder = rev.RelativeEncoder()
-        # self.frontRightMotorEncoder = rev.RelativeEncoder()
-        # self.rearRightMotorEncoder = rev.RelativeEncoder()
+        self.frontLeftMotorEncoder = wpilib.Encoder(0, 1)
+        self.rearLeftMotorEncoder = wpilib.Encoder(2, 3)
+        self.frontRightMotorEncoder = wpilib.Encoder(4, 5)
+        self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
 
         # invert the left side motors
         self.frontLeftMotor.setInverted(True)
 
         # Gyro
         self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
+        # self.gyro2 = phoenix5.Pi
         self.pidgen = phoenix5.sensors.Pigeon2(5)
         self.gyro.isConnected()
         gyroThread = threading.Thread(target=self.resetGryoThread)
@@ -63,6 +64,10 @@ class MyRobot(wpilib.TimedRobot):
         self.GryoConnected = table.getBooleanTopic("GyroConnected").publish()
         self.PidgeonCompass = table.getDoubleTopic("PidgeonCompass").publish()
         self.testRPM = table.getDoubleTopic("TestRPM").publish()
+        self.frontLeftMotorEncoderNetworkTopic = table.getDoubleTopic("frontLeftMotorEncoder").publish()
+        self.rearLeftMotorEncoderNetworkTopic = table.getDoubleTopic("rearLeftMotorEncoder").publish()
+        self.frontRightMotorEncoderNetworkTopic = table.getDoubleTopic("frontRightMotorEncoder").publish()
+        self.rearRightMotorEncoderNetworkTopic = table.getDoubleTopic("rearRightMotorEncoder").publish()
         self.PidgeonCompass.set(self.pidgen.getCompassHeading())
         self.GryoConnected.set(False)
 
@@ -85,7 +90,10 @@ class MyRobot(wpilib.TimedRobot):
         self.gyro.reset()
 
     def teleopInit(self):
-        pass
+        self.frontLeftMotorEncoder.reset()
+        self.rearLeftMotorEncoder.reset()
+        self.frontRightMotorEncoder.reset()
+        self.rearRightMotorEncoder.reset()
 
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
@@ -108,6 +116,11 @@ class MyRobot(wpilib.TimedRobot):
         self.arm.set(self.stick2.getRightY())
         self.wrist.set(self.stick2.getLeftY())
         self.shooter.set(self.stick.getLeftTriggerAxis())
+
+        self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
+        self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
+        self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
+        self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
 
         """Alternatively, to match the driver station enumeration, you may use  ---> self.drive.driveCartesian(
             self.stick.getRawAxis(1), self.stick.getRawAxis(3), self.stick.getRawAxis(2), 0
