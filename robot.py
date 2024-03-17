@@ -23,14 +23,11 @@ class MyRobot(wpilib.TimedRobot):
     MecanumDrive class.
     """
 
-    # The channel on the driver station that the joystick is connected to
-    joystickChannel = 0
-    joystickChannel2 = 1
-
     def robotInit(self):
         """Robot initialization function"""
 
-        # cscore.CameraServer.startAutomaticCapture()
+        self.joystickChannel = 0
+        self.joystickChannel2 = 1
 
         self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
