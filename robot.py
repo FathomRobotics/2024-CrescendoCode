@@ -151,7 +151,7 @@ class MyRobot(wpilib.TimedRobot):
                 self.solinoidRed.set(False)
             else:
                 self.solinoidRed.set(True)
-        if self.stick.getBackButtonReleased():
+        if self.stick.getBButtonReleased():
             if self.solinoidBlue.get():
                 self.solinoidBlue.set(False)
             else:
