@@ -61,7 +61,12 @@ class MyRobot(wpilib.TimedRobot):
         self.frontRightMotorEncoder = wpilib.Encoder(4, 5)
         self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
 
-        # invert the left side motors
+        # invert the left side motors 17
+        self.pnumaticsHub = wpilib.PneumaticHub(17)
+        self.solinoidRed = self.pnumaticsHub.makeSolenoid(0)
+        self.solinoidBlue = self.pnumaticsHub.makeSolenoid(1)
+        self.compressor = self.pnumaticsHub.makeCompressor()
+        self.compressor.isEnabled()
         self.frontLeftMotor.setInverted(True)
 
         # Gyro
@@ -105,13 +110,26 @@ class MyRobot(wpilib.TimedRobot):
         self.gyro.reset()
 
     def teleopInit(self):
+        if self.compressor.getPressure() > 60:
+            self.compressor.disable()
+        else:
+            self.compressor.enableDigital()
+        self.compressor.enableDigital()
         self.frontLeftMotorEncoder.reset()
         self.rearLeftMotorEncoder.reset()
         self.frontRightMotorEncoder.reset()
         self.rearRightMotorEncoder.reset()
 
+    def disabledInit(self):
+        self.compressor.disable()
+
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
+        if self.stick.getAButtonPressed():
+            self.compressor.disable()
+        if self.stick.getYButtonReleased():
+            self.compressor.enableDigital()
+
         self.PidgeonCompass.set(self.pidgen.getCompassHeading())
         self.GyroPub.set(self.gyro.getAngle())
         self.GryoConnected.set(self.gyro.isConnected())
@@ -126,16 +144,31 @@ class MyRobot(wpilib.TimedRobot):
 
         self.drive.driveCartesian(Idiot_x, Idiot_y, Idiot_rx, -self.gyro.getRotation2d())
 
-        self.intake.set(-self.stick.getRightTriggerAxis())
+        if self.stick.getRightBumper():
+            self.intake.set(self.stick.getRightTriggerAxis())
+        else:
+            self.intake.set(-self.stick.getRightTriggerAxis())
+
         self.arm.set(self.stick2.getRightY())
         self.wrist.set(self.stick2.getLeftY())
         self.shooter.set(self.stick.getLeftTriggerAxis())
-        self.shooterHelper.set(self.stick.getLeftTriggerAxis())
+        self.shooterHelper.set(-self.stick.getLeftTriggerAxis())
 
         self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
         self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
         self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
         self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
+
+        if self.stick.getXButtonReleased():
+            if self.solinoidRed.get():
+                self.solinoidRed.set(False)
+            else:
+                self.solinoidRed.set(True)
+        if self.stick.getBButtonReleased():
+            if self.solinoidBlue.get():
+                self.solinoidBlue.set(False)
+            else:
+                self.solinoidBlue.set(True)
 
         """Alternatively, to match the driver station enumeration, you may use  ---> self.drive.driveCartesian(
             self.stick.getRawAxis(1), self.stick.getRawAxis(3), self.stick.getRawAxis(2), 0
