@@ -145,7 +145,7 @@ class MyRobot(wpilib.TimedRobot):
         self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
         self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
 
-        if self.stick.getBackButtonReleased():
+        if self.stick.getXButtonReleased():
             self.doubleSolinoid.toggle()
 
         """Alternatively, to match the driver station enumeration, you may use  ---> self.drive.driveCartesian(
