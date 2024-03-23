@@ -50,7 +50,10 @@ class MyRobot(wpilib.TimedRobot):
         self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
 
         # invert the left side motors 17
-        self.pnumatics = wpilib.PneumaticHub(17)
+        self.pnumaticsHub = wpilib.PneumaticHub(17)
+        self.doubleSolinoid = self.pnumaticsHub.makeDoubleSolenoid(0, 1)
+        self.compressor = self.pnumaticsHub.makeCompressor()
+        self.compressor.isEnabled()
         self.frontLeftMotor.setInverted(True)
 
         # Gyro
@@ -92,13 +95,26 @@ class MyRobot(wpilib.TimedRobot):
         self.gyro.reset()
 
     def teleopInit(self):
+        if self.compressor.getPressure() > 60:
+            self.compressor.disable()
+        else:
+            self.compressor.enableDigital()
+        self.compressor.enableDigital()
         self.frontLeftMotorEncoder.reset()
         self.rearLeftMotorEncoder.reset()
         self.frontRightMotorEncoder.reset()
         self.rearRightMotorEncoder.reset()
 
+    def disabledInit(self):
+        self.compressor.disable()
+
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
+        if self.stick.getAButtonPressed():
+            self.compressor.disable()
+        if self.stick.getYButtonReleased():
+            self.compressor.enableDigital()
+
         self.PidgeonCompass.set(self.pidgen.getCompassHeading())
         self.GyroPub.set(self.gyro.getAngle())
         self.GryoConnected.set(self.gyro.isConnected())
@@ -124,6 +140,9 @@ class MyRobot(wpilib.TimedRobot):
         self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
         self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
         self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
+
+        if self.stick.getBackButtonReleased():
+            self.doubleSolinoid.toggle()
 
         """Alternatively, to match the driver station enumeration, you may use  ---> self.drive.driveCartesian(
             self.stick.getRawAxis(1), self.stick.getRawAxis(3), self.stick.getRawAxis(2), 0
