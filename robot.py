@@ -53,6 +53,7 @@ class MyRobot(wpilib.TimedRobot):
         self.arm = rev.CANSparkMax(8, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.wrist = rev.CANSparkMax(9, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.shooter = rev.CANSparkMax(10, type=rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.shooterHelper = rev.CANSparkMax(21, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.shooterEncoder = self.shooter.getEncoder()
 
         self.frontLeftMotorEncoder = wpilib.Encoder(0, 1)
@@ -129,6 +130,7 @@ class MyRobot(wpilib.TimedRobot):
         self.arm.set(self.stick2.getRightY())
         self.wrist.set(self.stick2.getLeftY())
         self.shooter.set(self.stick.getLeftTriggerAxis())
+        self.shooterHelper.set(self.stick.getLeftTriggerAxis())
 
         self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
         self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
