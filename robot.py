@@ -49,7 +49,8 @@ class MyRobot(wpilib.TimedRobot):
         self.frontRightMotorEncoder = wpilib.Encoder(4, 5)
         self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
 
-        # invert the left side motors
+        # invert the left side motors 17
+        self.pnumatics = wpilib.PneumaticHub(17)
         self.frontLeftMotor.setInverted(True)
 
         # Gyro
