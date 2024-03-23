@@ -130,7 +130,11 @@ class MyRobot(wpilib.TimedRobot):
 
         self.drive.driveCartesian(Idiot_x, Idiot_y, Idiot_rx, -self.gyro.getRotation2d())
 
-        self.intake.set(-self.stick.getRightTriggerAxis())
+        if self.stick.getRightBumper():
+            self.intake.set(self.stick.getRightTriggerAxis())
+        else:
+            self.intake.set(-self.stick.getRightTriggerAxis())
+
         self.arm.set(self.stick2.getRightY())
         self.wrist.set(self.stick2.getLeftY())
         self.shooter.set(self.stick.getLeftTriggerAxis())
