@@ -51,7 +51,8 @@ class MyRobot(wpilib.TimedRobot):
 
         # invert the left side motors 17
         self.pnumaticsHub = wpilib.PneumaticHub(17)
-        self.doubleSolinoid = self.pnumaticsHub.makeDoubleSolenoid(0, 1)
+        self.solinoidRed = self.pnumaticsHub.makeSolenoid(0)
+        self.solinoidBlue = self.pnumaticsHub.makeSolenoid(1)
         self.compressor = self.pnumaticsHub.makeCompressor()
         self.compressor.isEnabled()
         self.frontLeftMotor.setInverted(True)
@@ -146,7 +147,15 @@ class MyRobot(wpilib.TimedRobot):
         self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
 
         if self.stick.getXButtonReleased():
-            self.doubleSolinoid.toggle()
+            if self.solinoidRed.get():
+                self.solinoidRed.set(False)
+            else:
+                self.solinoidRed.set(True)
+        if self.stick.getBackButtonReleased():
+            if self.solinoidBlue.get():
+                self.solinoidBlue.set(False)
+            else:
+                self.solinoidBlue.set(True)
 
         """Alternatively, to match the driver station enumeration, you may use  ---> self.drive.driveCartesian(
             self.stick.getRawAxis(1), self.stick.getRawAxis(3), self.stick.getRawAxis(2), 0
