@@ -100,6 +100,7 @@ class MyRobot(wpilib.TimedRobot):
         # Define the Xbox Controller.
         self.stick = wpilib.XboxController(self.joystickChannel)
         self.stick2 = wpilib.XboxController(self.joystickChannel2)
+        self.stickXYToggle = False
 
     def robotPeriodic(self):
         if self.powerDistribution.getTotalCurrent() < self.maxCurrentDrawWhenCheckingPercentage:
@@ -134,9 +135,17 @@ class MyRobot(wpilib.TimedRobot):
         self.GyroPub.set(self.gyro.getAngle())
         self.GryoConnected.set(self.gyro.isConnected())
 
-        y = -self.stick.getLeftY()
-        x = -self.stick.getLeftX()
-        rx = -self.stick.getRightX()
+        if self.stickXYToggle:
+            y = -self.stick.getLeftY()
+            x = -self.stick.getLeftX()
+            rx = -self.stick.getRightX()
+        else:
+            x = -self.stick.getLeftY()
+            y = -self.stick.getLeftX()
+            rx = -self.stick.getRightX()
+
+        if self.stick.getLeftStickButtonReleased():
+            self.stickXYToggle = !self.stickXYToggle
 
         Idiot_y = math.pow(y, 3)
         Idiot_x = math.pow(x, 3)
