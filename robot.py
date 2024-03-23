@@ -25,7 +25,7 @@ class MyRobot(wpilib.TimedRobot):
 
     def robotInit(self):
         """Robot initialization function"""
-        self.driverStation = wpilib.DriverStation()
+        # self.driverStation = wpilib.DriverStation()
 
         self.minVoltage = 11.9
         self.maxVoltage = 13
