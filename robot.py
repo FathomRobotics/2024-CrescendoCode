@@ -136,11 +136,11 @@ class MyRobot(wpilib.TimedRobot):
         self.GryoConnected.set(self.gyro.isConnected())
 
         if self.stickXYToggle:
-            y = -self.stick.getLeftY()
+            y = self.stick.getLeftY()
             x = -self.stick.getLeftX()
             rx = -self.stick.getRightX()
         else:
-            x = -self.stick.getLeftY()
+            x = self.stick.getLeftY()
             y = -self.stick.getLeftX()
             rx = -self.stick.getRightX()
 
