@@ -145,7 +145,7 @@ class MyRobot(wpilib.TimedRobot):
             rx = -self.stick.getRightX()
 
         if self.stick.getLeftStickButtonReleased():
-            self.stickXYToggle = !self.stickXYToggle
+            self.stickXYToggle = not self.stickXYToggle
 
         Idiot_y = math.pow(y, 3)
         Idiot_x = math.pow(x, 3)
