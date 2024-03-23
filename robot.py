@@ -134,7 +134,7 @@ class MyRobot(wpilib.TimedRobot):
         self.arm.set(self.stick2.getRightY())
         self.wrist.set(self.stick2.getLeftY())
         self.shooter.set(self.stick.getLeftTriggerAxis())
-        self.shooterHelper.set(self.stick.getLeftTriggerAxis())
+        self.shooterHelper.set(-self.stick.getLeftTriggerAxis())
 
         self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
         self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
