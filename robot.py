@@ -150,7 +150,7 @@ class MyRobot(wpilib.TimedRobot):
             self.intake.set(-self.stick.getRightTriggerAxis())
 
         self.arm.set(self.stick2.getRightY())
-        self.wrist.set((0.25*self.stick2.getLeftY())+(pow(self.stick2.getLeftY(), 7)*0.75))
+        self.wrist.set(-((0.25*self.stick2.getLeftY())+(pow(self.stick2.getLeftY(), 7)*0.75)))
         self.shooter.set(self.stick.getLeftTriggerAxis())
         self.shooterHelper.set(-self.stick.getLeftTriggerAxis())
 
