@@ -135,6 +135,13 @@ class MyRobot(wpilib.TimedRobot):
         time.sleep(1)
         self.gyro.reset()
 
+    def autonomousPeriodic(self):
+        # Note: Look here
+        # https://github.com/robotpy/examples/blob/main/GyroDriveCommands/commands/turntoangle.py
+        # https://docs.wpilib.org/en/stable/docs/software/pathplanning/trajectory-tutorial/characterizing-drive.html
+        # https://docs.wpilib.org/en/stable/docs/software/advanced-controls/index.html
+        pass
+
     def teleopInit(self):
         if self.compressor.getPressure() > 60:
             self.compressor.disable()
