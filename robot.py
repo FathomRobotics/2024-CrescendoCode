@@ -17,6 +17,28 @@ import wpilib
 import wpilib.drive
 
 
+class PIDController:
+    def __init__(self, sp):
+        self.integralSummation = 0
+        self.lastError = 0
+        self.originalTime = int(time.time())
+        self.setpoint = sp
+
+    def start(self, setpoint):
+        self.integralSummation = 0
+        self.lastError = 0
+        self.originalTime = int(time.time())
+        if setpoint is not None:
+            self.setpoint = setpoint
+
+    def pidController(self, state, p, i, d):
+        error = self.setpoint - state
+        integralSummation = self.integralSummation + (error * (int(time.time()) - self.originalTime))
+        derivative = (error - self.lastError) / (int(time.time()) - self.originalTime)
+        self.lastError = error
+        return (p * error) + (i * integralSummation) + (d * derivative)
+
+
 class MyRobot(wpilib.TimedRobot):
     """
     This is a demo program showing how to use Mecanum control with the
@@ -94,10 +116,14 @@ class MyRobot(wpilib.TimedRobot):
             self.rearRightMotor,
         )
         self.f2d = wpilib.Field2d()
+
         # Define the Xbox Controller.
-        self.stick = wpilib.XboxController(self.joystickChannel)
-        self.stick2 = wpilib.XboxController(self.joystickChannel2)
+        self.driver1 = wpilib.XboxController(self.joystickChannel)
+        self.driver2 = wpilib.XboxController(self.joystickChannel2)
         self.stickXYToggle = False
+
+        # PID Stuff
+        self.armPID = None
 
     def robotPeriodic(self):
         if self.powerDistribution.getTotalCurrent() < self.maxCurrentDrawWhenCheckingPercentage:
@@ -118,15 +144,16 @@ class MyRobot(wpilib.TimedRobot):
         self.rearLeftMotorEncoder.reset()
         self.frontRightMotorEncoder.reset()
         self.rearRightMotorEncoder.reset()
+        self.armPID = PIDController(0)
 
     def disabledInit(self):
         self.compressor.disable()
 
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
-        if self.stick.getAButtonPressed():
+        if self.driver1.getAButtonPressed():
             self.compressor.disable()
-        if self.stick.getYButtonReleased():
+        if self.driver1.getYButtonReleased():
             self.compressor.enableDigital()
 
         self.PidgeonCompass.set(self.pidgen.getCompassHeading())
@@ -134,15 +161,15 @@ class MyRobot(wpilib.TimedRobot):
         self.GryoConnected.set(self.gyro.isConnected())
 
         if self.stickXYToggle:
-            y = self.stick.getLeftY()
-            x = -self.stick.getLeftX()
-            rx = -self.stick.getRightX()
+            y = self.driver1.getLeftY()
+            x = -self.driver1.getLeftX()
+            rx = -self.driver1.getRightX()
         else:
-            x = self.stick.getLeftY()
-            y = -self.stick.getLeftX()
-            rx = -self.stick.getRightX()
+            x = self.driver1.getLeftY()
+            y = -self.driver1.getLeftX()
+            rx = -self.driver1.getRightX()
 
-        if self.stick.getLeftStickButtonReleased():
+        if self.driver1.getLeftStickButtonReleased():
             self.stickXYToggle = not self.stickXYToggle
 
         Idiot_y = math.pow(y, 3)
@@ -151,27 +178,27 @@ class MyRobot(wpilib.TimedRobot):
 
         self.drive.driveCartesian(Idiot_x, Idiot_y, Idiot_rx, -self.gyro.getRotation2d())
 
-        if self.stick.getRightBumper():
-            self.intake.set(self.stick.getRightTriggerAxis())
+        if self.driver1.getRightBumper():
+            self.intake.set(self.driver1.getRightTriggerAxis())
         else:
-            self.intake.set(-self.stick.getRightTriggerAxis())
+            self.intake.set(-self.driver1.getRightTriggerAxis())
 
-        self.arm.set(-self.stick2.getRightY())
-        self.wrist.set(-((0.25 * self.stick2.getLeftY()) + (pow(self.stick2.getLeftY(), 7) * 0.75)))
-        self.shooter.set(self.stick.getLeftTriggerAxis())
-        self.shooterHelper.set(-self.stick.getLeftTriggerAxis())
+        self.arm.set(-self.driver2.getRightY())
+        self.wrist.set(-((0.25 * self.driver2.getLeftY()) + (pow(self.driver2.getLeftY(), 7) * 0.75)))
+        self.shooter.set(self.driver1.getLeftTriggerAxis())
+        self.shooterHelper.set(-self.driver1.getLeftTriggerAxis())
 
         self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
         self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
         self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
         self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
 
-        if self.stick.getXButtonReleased():
+        if self.driver1.getXButtonReleased():
             if self.solinoidRed.get():
                 self.solinoidRed.set(False)
             else:
                 self.solinoidRed.set(True)
-        if self.stick.getBButtonReleased():
+        if self.driver1.getBButtonReleased():
             if self.solinoidBlue.get():
                 self.solinoidBlue.set(False)
             else:
