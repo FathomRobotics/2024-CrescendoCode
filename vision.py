@@ -18,6 +18,9 @@ import numpy as np
 # to run it differs depending on whether you’re on a RoboRIO or a coprocessor
 #
 # https://robotpy.readthedocs.io/en/stable/vision/code.html
+#
+# Here is the docs for raspberry pi:
+# https://docs.wpilib.org/en/stable/docs/software/vision-processing/wpilibpi/using-the-raspberry-pi-for-frc.html
 
 
 def main():
