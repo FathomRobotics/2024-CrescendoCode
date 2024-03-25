@@ -80,6 +80,10 @@ class MyRobot(wpilib.TimedRobot):
         self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
         self.shooterEncoder = self.shooter.getEncoder()
 
+        # Limit Switch
+        self.armDownLimitSwitch = wpilib.DigitalInput(9)
+        self.armUpLimitSwitch = wpilib.DigitalInput(8)
+
         # Drive Train Configuration
         self.rearLeftMotor.setInverted(True)
 
@@ -109,6 +113,8 @@ class MyRobot(wpilib.TimedRobot):
         # TODO: Implement Speedometer
         # TODO: Implement warning lights (Power Usage, Arm Limits, PDH Temp)
         # TODO: Implement Shooter Indicator Light
+        self.armDownLimitSwitchNetwork = table.getBooleanTopic("ArmDownLimitSwitch").publish()
+        self.armUpLimitSwitchNetwork = table.getDoubleTopic("ArmUpLimitSwitch").publish()
         self.GyroPub = table.getDoubleTopic("Gyro-Degrees").publish()  # Gyro Value
         self.GryoConnected = table.getBooleanTopic("NavX-Connected").publish()  # NavX Connected?
         self.shooterSpunUp = table.getBooleanTopic("Shooter-Ready").publish()  # Shooter Ready
@@ -212,6 +218,8 @@ class MyRobot(wpilib.TimedRobot):
         self.PidgeonCompass.set(self.pidgen.getCompassHeading())
         self.GyroPub.set(self.gyro.getAngle())
         self.GryoConnected.set(self.gyro.isConnected())
+        self.armDownLimitSwitchNetwork.set(self.armDownLimitSwitch.get())
+        self.armUpLimitSwitchNetwork.set(self.armUpLimitSwitch.get())
         # TODO: Add shooter ready
 
 
