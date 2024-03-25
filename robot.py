@@ -25,21 +25,18 @@ class MyRobot(wpilib.TimedRobot):
 
     def robotInit(self):
         """Robot initialization function"""
-        # self.driverStation = wpilib.DriverStation()
 
         self.minVoltage = 11.9
         self.maxVoltage = 13
         self.maxCurrentDrawWhenCheckingPercentage = 0.05
-        self._maxmandiffVoltage = self.maxVoltage-self.minVoltage
+        self._maxmandiffVoltage = self.maxVoltage - self.minVoltage
         if self._maxmandiffVoltage <= 0:
             wpilib.reportWarning("Min Voltage Variable is Larger or Equal to Max", printTrace=False)
 
         self.joystickChannel = 0
         self.joystickChannel2 = 1
 
-
         self.powerDistribution = wpilib.PowerDistribution()
-
 
         # CAN Devices
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
@@ -104,7 +101,8 @@ class MyRobot(wpilib.TimedRobot):
 
     def robotPeriodic(self):
         if self.powerDistribution.getTotalCurrent() < self.maxCurrentDrawWhenCheckingPercentage:
-            self.BatteryPercentageEstimationTopic.set((self.powerDistribution.getVoltage()-self.minVoltage)/self._maxmandiffVoltage)
+            self.BatteryPercentageEstimationTopic.set(
+                (self.powerDistribution.getVoltage() - self.minVoltage) / self._maxmandiffVoltage)
 
     def resetGryoThread(self):
         time.sleep(1)
@@ -159,14 +157,14 @@ class MyRobot(wpilib.TimedRobot):
             self.intake.set(-self.stick.getRightTriggerAxis())
 
         self.arm.set(-self.stick2.getRightY())
-        self.wrist.set(-((0.25*self.stick2.getLeftY())+(pow(self.stick2.getLeftY(), 7)*0.75)))
+        self.wrist.set(-((0.25 * self.stick2.getLeftY()) + (pow(self.stick2.getLeftY(), 7) * 0.75)))
         self.shooter.set(self.stick.getLeftTriggerAxis())
         self.shooterHelper.set(-self.stick.getLeftTriggerAxis())
 
-        self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
-        self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw()/10000) * 6 * math.pi)
-        self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
-        self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw()/10000) * 6 * math.pi)
+        self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+        self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+        self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+        self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
 
         if self.stick.getXButtonReleased():
             if self.solinoidRed.get():
