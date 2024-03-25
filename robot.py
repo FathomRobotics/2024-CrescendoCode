@@ -90,7 +90,6 @@ class MyRobot(wpilib.TimedRobot):
 
         # Gyro
         self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
-        self.gyro.isConnected()
         gyroThread = threading.Thread(target=self.resetGryoThread)
         gyroThread.run()
         inst = ntcore.NetworkTableInstance.getDefault()
@@ -193,20 +192,12 @@ class MyRobot(wpilib.TimedRobot):
         self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
         self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
 
-        if self.driver1.getXButtonReleased():
-            if self.solinoidRed.get():
-                self.solinoidRed.set(False)
-            else:
-                self.solinoidRed.set(True)
-        if self.driver1.getBButtonReleased():
-            if self.solinoidBlue.get():
-                self.solinoidBlue.set(False)
-            else:
-                self.solinoidBlue.set(True)
-
-        """Alternatively, to match the driver station enumeration, you may use  ---> self.drive.driveCartesian(
-            self.stick.getRawAxis(1), self.stick.getRawAxis(3), self.stick.getRawAxis(2), 0
-        )"""
+        if self.driver1.getYButtonReleased():
+            self.solinoidRed.set(False)
+            self.solinoidRed.set(True)
+        if self.driver1.getAButtonPressed():
+            self.solinoidRed.set(True)
+            self.solinoidRed.set(False)
 
 
 if __name__ == "__main__":
