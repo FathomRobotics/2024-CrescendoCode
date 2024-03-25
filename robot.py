@@ -32,6 +32,8 @@ class PIDController:
             self.setpoint = setpoint
 
     def pidController(self, state, p, i, d):
+        # Note: This is how we do it
+        # https://github.com/Evium-99/FtcRobotController/blob/25dd0e3e160cc1c4ef66c7e2853a0461da9241de/TeamCode/src/main/java/org/firstinspires/ftc/teamcode/armPIDTuner.java#L125-L131
         error = self.setpoint - state
         integralSummation = self.integralSummation + (error * (int(time.time()) - self.originalTime))
         derivative = (error - self.lastError) / (int(time.time()) - self.originalTime)
