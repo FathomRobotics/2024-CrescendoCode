@@ -177,13 +177,14 @@ class MyRobot(wpilib.TimedRobot):
 
         self.drive.driveCartesian(Idiot_x, Idiot_y, Idiot_rx, -self.gyro.getRotation2d())
 
-        if self.driver1.getRightBumper():
-            self.intake.set(self.driver1.getRightTriggerAxis())
+        if self.driver2.getRightTriggerAxis() > self.driver2.getLeftTriggerAxis():
+            self.intake.set(self.driver2.getRightTriggerAxis())
         else:
-            self.intake.set(-self.driver1.getRightTriggerAxis())
+            self.intake.set(-self.driver2.getLeftTriggerAxis())
 
         self.arm.set(-self.driver2.getRightY())
         self.wrist.set(-((0.25 * self.driver2.getLeftY()) + (pow(self.driver2.getLeftY(), 7) * 0.75)))
+        # TODO: Make shooter be controlled by Driver 2 left bumper
         self.shooter.set(self.driver1.getLeftTriggerAxis())
         self.shooterHelper.set(-self.driver1.getLeftTriggerAxis())
 
