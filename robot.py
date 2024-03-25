@@ -107,6 +107,7 @@ class MyRobot(wpilib.TimedRobot):
         table = inst.getTable("SmartDashboard")
         self.GyroPub = table.getDoubleTopic("Gyro-Degrees").publish()  # Gyro Value
         self.GryoConnected = table.getBooleanTopic("NavX-Connected").publish()  # NavX Connected?
+        self.shooterSpunUp = table.getBooleanTopic("Shooter-Ready").publish()  # Shooter Ready
         self.PidgeonCompass = table.getDoubleTopic("Pigeon-Degrees").publish()  # Gyro Pigeon Value
         self.BatteryPercentageEstimationTopic = table.getDoubleTopic("BatteryPercentageEstimation").publish()  # Battery
         self.frontLeftMotorEncoderNetworkTopic = table.getDoubleTopic("frontLeftMotorEncoder").publish()
@@ -162,10 +163,6 @@ class MyRobot(wpilib.TimedRobot):
         if self.driver1.getYButtonReleased():
             self.compressor.enableDigital()
 
-        self.PidgeonCompass.set(self.pidgen.getCompassHeading())
-        self.GyroPub.set(self.gyro.getAngle())
-        self.GryoConnected.set(self.gyro.isConnected())
-
         if self.stickXYToggle:
             y = self.driver1.getLeftY()
             x = -self.driver1.getLeftX()
@@ -206,6 +203,12 @@ class MyRobot(wpilib.TimedRobot):
         if self.driver1.getAButtonPressed():
             self.solenoidRed.set(True)
             self.solenoidRed.set(False)
+
+        # Send Back Data
+        self.PidgeonCompass.set(self.pidgen.getCompassHeading())
+        self.GyroPub.set(self.gyro.getAngle())
+        self.GryoConnected.set(self.gyro.isConnected())
+        # TODO: Add shooter ready
 
 
 if __name__ == "__main__":
