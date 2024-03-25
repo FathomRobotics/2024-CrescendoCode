@@ -105,6 +105,10 @@ class MyRobot(wpilib.TimedRobot):
         # Network Tables Initialization
         inst = ntcore.NetworkTableInstance.getDefault()
         table = inst.getTable("SmartDashboard")
+        # TODO: Implement Field 2d View
+        # TODO: Implement Speedometer
+        # TODO: Implement warning lights (Power Usage, Arm Limits, PDH Temp)
+        # TODO: Implement Shooter Indicator Light
         self.GyroPub = table.getDoubleTopic("Gyro-Degrees").publish()  # Gyro Value
         self.GryoConnected = table.getBooleanTopic("NavX-Connected").publish()  # NavX Connected?
         self.shooterSpunUp = table.getBooleanTopic("Shooter-Ready").publish()  # Shooter Ready
