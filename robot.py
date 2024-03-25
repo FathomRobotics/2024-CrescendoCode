@@ -23,19 +23,31 @@ class MyRobot(wpilib.TimedRobot):
     MecanumDrive class.
     """
 
-    # The channel on the driver station that the joystick is connected to
-    joystickChannel = 0
-    joystickChannel2 = 1
-
     def robotInit(self):
         """Robot initialization function"""
+        # self.driverStation = wpilib.DriverStation()
 
-        # cscore.CameraServer.startAutomaticCapture()
+        self.minVoltage = 11.9
+        self.maxVoltage = 13
+        self.maxCurrentDrawWhenCheckingPercentage = 0.05
+        self._maxmandiffVoltage = self.maxVoltage-self.minVoltage
+        if self._maxmandiffVoltage <= 0:
+            wpilib.reportWarning("Min Voltage Variable is Larger or Equal to Max", printTrace=False)
 
-        self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
+        self.joystickChannel = 0
+        self.joystickChannel2 = 1
+
+
+        self.powerDistribution = wpilib.PowerDistribution()
+
+
+        # CAN Devices
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
-        self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
         self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
+        self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
+        self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
+        self.pidgen = phoenix5.sensors.Pigeon2(5)
+        # self.pnumaticsHub = wpilib.PneumaticHub(canID)
 
         self.intake = rev.CANSparkMax(7, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.arm = rev.CANSparkMax(8, type=rev.CANSparkLowLevel.MotorType.kBrushless)
@@ -59,8 +71,6 @@ class MyRobot(wpilib.TimedRobot):
 
         # Gyro
         self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
-        # self.gyro2 = phoenix5.Pi
-        self.pidgen = phoenix5.sensors.Pigeon2(5)
         self.gyro.isConnected()
         gyroThread = threading.Thread(target=self.resetGryoThread)
         gyroThread.run()
@@ -69,7 +79,7 @@ class MyRobot(wpilib.TimedRobot):
         self.GyroPub = table.getDoubleTopic("Gyro").publish()
         self.GryoConnected = table.getBooleanTopic("GyroConnected").publish()
         self.PidgeonCompass = table.getDoubleTopic("PidgeonCompass").publish()
-        self.testRPM = table.getDoubleTopic("TestRPM").publish()
+        self.BatteryPercentageEstimationTopic = table.getDoubleTopic("BatteryPercentageEstimation").publish()
         self.frontLeftMotorEncoderNetworkTopic = table.getDoubleTopic("frontLeftMotorEncoder").publish()
         self.rearLeftMotorEncoderNetworkTopic = table.getDoubleTopic("rearLeftMotorEncoder").publish()
         self.frontRightMotorEncoderNetworkTopic = table.getDoubleTopic("frontRightMotorEncoder").publish()
@@ -90,6 +100,11 @@ class MyRobot(wpilib.TimedRobot):
         # Define the Xbox Controller.
         self.stick = wpilib.XboxController(self.joystickChannel)
         self.stick2 = wpilib.XboxController(self.joystickChannel2)
+        self.stickXYToggle = False
+
+    def robotPeriodic(self):
+        if self.powerDistribution.getTotalCurrent() < self.maxCurrentDrawWhenCheckingPercentage:
+            self.BatteryPercentageEstimationTopic.set((self.powerDistribution.getVoltage()-self.minVoltage)/self._maxmandiffVoltage)
 
     def resetGryoThread(self):
         time.sleep(1)
@@ -120,14 +135,21 @@ class MyRobot(wpilib.TimedRobot):
         self.GyroPub.set(self.gyro.getAngle())
         self.GryoConnected.set(self.gyro.isConnected())
 
-        y = -self.stick.getLeftY()
-        x = -self.stick.getLeftX()
-        rx = -self.stick.getRightX()
+        if self.stickXYToggle:
+            y = self.stick.getLeftY()
+            x = -self.stick.getLeftX()
+            rx = -self.stick.getRightX()
+        else:
+            x = self.stick.getLeftY()
+            y = -self.stick.getLeftX()
+            rx = -self.stick.getRightX()
+
+        if self.stick.getLeftStickButtonReleased():
+            self.stickXYToggle = not self.stickXYToggle
 
         Idiot_y = math.pow(y, 3)
         Idiot_x = math.pow(x, 3)
         Idiot_rx = math.pow(rx, 3)
-        self.testRPM.set(self.shooterEncoder.getVelocity())
 
         self.drive.driveCartesian(Idiot_x, Idiot_y, Idiot_rx, -self.gyro.getRotation2d())
 
@@ -136,8 +158,8 @@ class MyRobot(wpilib.TimedRobot):
         else:
             self.intake.set(-self.stick.getRightTriggerAxis())
 
-        self.arm.set(self.stick2.getRightY())
-        self.wrist.set(self.stick2.getLeftY())
+        self.arm.set(-self.stick2.getRightY())
+        self.wrist.set(-((0.25*self.stick2.getLeftY())+(pow(self.stick2.getLeftY(), 7)*0.75)))
         self.shooter.set(self.stick.getLeftTriggerAxis())
         self.shooterHelper.set(-self.stick.getLeftTriggerAxis())
 
