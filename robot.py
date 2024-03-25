@@ -50,6 +50,7 @@ class MyRobot(wpilib.TimedRobot):
     def robotInit(self):
         """Robot initialization function"""
 
+        # Novelty Battery Percentage
         self.minVoltage = 11.9
         self.maxVoltage = 13
         self.maxCurrentDrawWhenCheckingPercentage = 0.05
@@ -57,57 +58,29 @@ class MyRobot(wpilib.TimedRobot):
         if self._maxmandiffVoltage <= 0:
             wpilib.reportWarning("Min Voltage Variable is Larger or Equal to Max", printTrace=False)
 
-        self.joystickChannel = 0
-        self.joystickChannel2 = 1
-
         self.powerDistribution = wpilib.PowerDistribution()
 
-        # CAN Devices
+        # Control Devices
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
         self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
         self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
         self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
         self.pidgen = phoenix5.sensors.Pigeon2(5)
-        # self.pnumaticsHub = wpilib.PneumaticHub(canID)
-
         self.intake = rev.CANSparkMax(7, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.arm = rev.CANSparkMax(8, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.wrist = rev.CANSparkMax(9, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.shooter = rev.CANSparkMax(10, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.shooterHelper = rev.CANSparkMax(21, type=rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.shooterEncoder = self.shooter.getEncoder()
+        self.pnumaticsHub = wpilib.PneumaticHub(17)
 
+        # Encoders
         self.frontLeftMotorEncoder = wpilib.Encoder(0, 1)
         self.rearLeftMotorEncoder = wpilib.Encoder(2, 3)
         self.frontRightMotorEncoder = wpilib.Encoder(4, 5)
         self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
+        self.shooterEncoder = self.shooter.getEncoder()
 
-        # invert the left side motors 17
-        self.pnumaticsHub = wpilib.PneumaticHub(17)
-        self.solinoidRed = self.pnumaticsHub.makeSolenoid(0)
-        self.solinoidBlue = self.pnumaticsHub.makeSolenoid(1)
-        self.compressor = self.pnumaticsHub.makeCompressor()
-        self.compressor.isEnabled()
-        self.frontLeftMotor.setInverted(True)
-
-        # Gyro
-        self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
-        gyroThread = threading.Thread(target=self.resetGryoThread)
-        gyroThread.run()
-        inst = ntcore.NetworkTableInstance.getDefault()
-        table = inst.getTable("SmartDashboard")
-        self.GyroPub = table.getDoubleTopic("Gyro").publish()
-        self.GryoConnected = table.getBooleanTopic("GyroConnected").publish()
-        self.PidgeonCompass = table.getDoubleTopic("PidgeonCompass").publish()
-        self.BatteryPercentageEstimationTopic = table.getDoubleTopic("BatteryPercentageEstimation").publish()
-        self.frontLeftMotorEncoderNetworkTopic = table.getDoubleTopic("frontLeftMotorEncoder").publish()
-        self.rearLeftMotorEncoderNetworkTopic = table.getDoubleTopic("rearLeftMotorEncoder").publish()
-        self.frontRightMotorEncoderNetworkTopic = table.getDoubleTopic("frontRightMotorEncoder").publish()
-        self.rearRightMotorEncoderNetworkTopic = table.getDoubleTopic("rearRightMotorEncoder").publish()
-        self.PidgeonCompass.set(self.pidgen.getCompassHeading())
-        self.GryoConnected.set(False)
-
-        # you may need to change or remove this to match your robot
+        # Drive Train Configuration
         self.rearLeftMotor.setInverted(True)
 
         self.drive = wpilib.drive.MecanumDrive(
@@ -116,14 +89,39 @@ class MyRobot(wpilib.TimedRobot):
             self.frontRightMotor,
             self.rearRightMotor,
         )
-        self.f2d = wpilib.Field2d()
 
-        # Define the Xbox Controller.
-        self.driver1 = wpilib.XboxController(self.joystickChannel)
-        self.driver2 = wpilib.XboxController(self.joystickChannel2)
+        # Pneumatics Hub Devices
+        self.solenoidRed = self.pnumaticsHub.makeSolenoid(0)
+        self.solenoidBlue = self.pnumaticsHub.makeSolenoid(1)
+        self.compressor = self.pnumaticsHub.makeCompressor()
+        self.compressor.isEnabled()
+        self.frontLeftMotor.setInverted(True)
+
+        # NavX Initialization
+        self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
+        gyroThread = threading.Thread(target=self.resetGryoThread)
+        gyroThread.run()
+
+        # Network Tables Initialization
+        inst = ntcore.NetworkTableInstance.getDefault()
+        table = inst.getTable("SmartDashboard")
+        self.GyroPub = table.getDoubleTopic("Gyro-Degrees").publish()  # Gyro Value
+        self.GryoConnected = table.getBooleanTopic("NavX-Connected").publish()  # NavX Connected?
+        self.PidgeonCompass = table.getDoubleTopic("Pigeon-Degrees").publish()  # Gyro Pigeon Value
+        self.BatteryPercentageEstimationTopic = table.getDoubleTopic("BatteryPercentageEstimation").publish()  # Battery
+        self.frontLeftMotorEncoderNetworkTopic = table.getDoubleTopic("frontLeftMotorEncoder").publish()
+        self.rearLeftMotorEncoderNetworkTopic = table.getDoubleTopic("rearLeftMotorEncoder").publish()
+        self.frontRightMotorEncoderNetworkTopic = table.getDoubleTopic("frontRightMotorEncoder").publish()
+        self.rearRightMotorEncoderNetworkTopic = table.getDoubleTopic("rearRightMotorEncoder").publish()
+        self.PidgeonCompass.set(self.pidgen.getCompassHeading())
+        self.GryoConnected.set(False)
+
+        # Define the Controller
+        self.driver1 = wpilib.XboxController(0)
+        self.driver2 = wpilib.XboxController(1)
         self.stickXYToggle = False
 
-        # PID Stuff
+        # PID Variable Declaration
         self.armPID = None
 
     def robotPeriodic(self):
@@ -203,11 +201,11 @@ class MyRobot(wpilib.TimedRobot):
         self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
 
         if self.driver1.getYButtonReleased():
-            self.solinoidRed.set(False)
-            self.solinoidRed.set(True)
+            self.solenoidRed.set(False)
+            self.solenoidRed.set(True)
         if self.driver1.getAButtonPressed():
-            self.solinoidRed.set(True)
-            self.solinoidRed.set(False)
+            self.solenoidRed.set(True)
+            self.solenoidRed.set(False)
 
 
 if __name__ == "__main__":
