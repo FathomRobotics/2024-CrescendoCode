@@ -33,10 +33,17 @@ class ActuatorSystemModeManager:
         self.Intaking = 1
         self.Shooting = 2
         self.Amping = 3
+        self.Reset = 4
 
     def toggleIntaking(self):
         if self.Mode == self.Idle:
             self.Mode = self.Intaking
+        else:
+            self.Mode = self.Idle
+
+    def toggleReset(self):
+        if self.Mode == self.Idle:
+            self.Mode = self.Reset
         else:
             self.Mode = self.Idle
 
@@ -270,12 +277,12 @@ class MyRobot(wpilib.TimedRobot):
             self.wristDSub.get()
         )
         # Arm Positions (0 is Down, 120 is Up)
-        self.armPositions = [0, 120]
+        self.armPositions = [0, 120, 198]
         self.currentArmPosition = 1
         self.armSPVar.set(120)
 
         # Wrist Positions (-1000 is Intake, -4500 is Idle)
-        self.wristPositions = [-1000, -4500]
+        self.wristPositions = [-1000, -4500, 0]
         self.currentWristPosition = 1
         self.wristSP.set(0)
 
@@ -386,6 +393,10 @@ class MyRobot(wpilib.TimedRobot):
         if self.driver2.getXButtonReleased():
             self.actuatorMode.toggleShooting()
 
+        # Reset Button
+        if self.driver2.getYButtonReleased():
+            self.actuatorMode.toggleReset()
+
         # Toggle Inverted Base Controls
 
         if self.driver1.getLeftStickButtonReleased():
@@ -405,18 +416,6 @@ class MyRobot(wpilib.TimedRobot):
         Idiot_rx = math.pow(rx, 3)
 
         self.drive.driveCartesian(Idiot_x, Idiot_y, Idiot_rx, -self.gyro.getRotation2d())
-
-        # Safety Switches and Arm
-        if self.armDownLimitSwitch.get() is False:
-            self.arm.set(0.05)
-            if self.armEncoderReseting is False:
-                self.armBuiltinEncoder.setPosition(0)
-            self.armEncoderReseting = True
-        elif self.armUpLimitSwitch.get() is False:
-            self.arm.set(-0.125)
-        else:
-            self.armEncoderReseting = False
-            self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), self.armSPVarSub.get()))
 
         # Actuator Mode Logic
         if self.actuatorMode.Mode == self.actuatorMode.Idle:
@@ -443,7 +442,7 @@ class MyRobot(wpilib.TimedRobot):
             self.currentWristPosition = 1  # Idle Wrist Position
             self.shooterOn = True
             self.intake.set(0)
-            if (self.shooterEncoder.getVelocity() > 3000) and (self.shooterHelperEncoder.getVelocity() > 3000):
+            if self.shooterEncoder.getVelocity() > 3000:
                 self.intake.set(0.5)  # Spit note out of jaws
             # If shooter spun and intake reversed for x revolutions, set mode to idle
         elif self.actuatorMode.Mode == self.actuatorMode.Amping:
@@ -453,7 +452,6 @@ class MyRobot(wpilib.TimedRobot):
             self.intake.set(0)
             if self.armBuiltinEncoder.getPosition() >= 110:
                 self.teleautoArmUp = True
-
             if self.teleautoArmUp is True:
                 self.currentWristPosition = 0
             # -1000 is Out of perimeter, -4000 is Safe
@@ -464,10 +462,25 @@ class MyRobot(wpilib.TimedRobot):
                 self.intake.set(0.5)  # Spit note out of jaws
 
             # TODO: If intake/outake spins for x amount of revolutions set mode to idle
+        elif self.actuatorMode.Mode == self.actuatorMode.Reset:
+            self.currentArmPosition = 2
+            self.currentWristPosition = 2
+
+        # Safety Switches and Arm
+        if self.armDownLimitSwitch.get() is False:
+            self.arm.set(0.05)
+            if self.armEncoderReseting is False:
+                self.armBuiltinEncoder.setPosition(0)
+            self.armEncoderReseting = True
+        elif self.armUpLimitSwitch.get() is False:
+            self.arm.set(-0.125)
+        else:
+            self.armEncoderReseting = False
+            self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), self.armPositions[self.currentArmPosition]))
 
         # Wrist Feedback Controller
 
-        self.wrist.set(-0.004*self.wristPID.calculate(self.wristEncoder.get(), self.wristSPSub.get()))
+        self.wrist.set(-0.004*self.wristPID.calculate(self.wristEncoder.get(), self.wristPositions[self.currentWristPosition]))
 
         # Shooter Feedback and Feedforward Controller
         if self.shooterOn:
