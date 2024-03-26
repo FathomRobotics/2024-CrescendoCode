@@ -87,34 +87,7 @@ class MyRobot(wpilib.TimedRobot):
         gyroThread.run()
 
         # DIO Encoders
-        # self.frontLeftMotorEncoder = wpilib.Encoder(0, 1)
-        # self.rearLeftMotorEncoder = wpilib.Encoder(2, 3)
-        # self.frontRightMotorEncoder = wpilib.Encoder(4, 5)
-        # self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
         self.wristEncoder = wpilib.Encoder(23, 22)
-
-        # frontLeftLocation = Translation2d(0.2713, 0.2715)
-        # frontRightLocation = Translation2d(0.2713, -0.2715)
-        # backLeftLocation = Translation2d(-0.2713, 0.2715)
-        # backRightLocation = Translation2d(-0.2713, -0.2715)
-        #
-        # # Creating my kinematics object using the wheel locations.
-        # self.kinematics = wpimath.kinematics.MecanumDriveKinematics(
-        #     frontLeftLocation, frontRightLocation, backLeftLocation, backRightLocation
-        # )
-        #
-        # # Creating my odometry object from the kinematics object and the initial wheel positions.
-        # # Here, our starting pose is 5 meters along the long end of the field and in the
-        # # center of the field along the short end, facing the opposing alliance wall.
-        # self.odometry = MecanumDriveOdometry(
-        #     self.kinematics,
-        #     self.gyro.getRotation2d(),
-        #     wpimath.kinematics.MecanumDriveWheelPositions(
-        #         self.frontLeftMotorEncoder.getDistance(), self.frontRightMotorEncoder.getDistance(),
-        #         self.rearLeftMotorEncoder.getDistance(), self.rearRightMotorEncoder.getDistance()
-        #     ),
-        #     Pose2d(5.0, 13.5, Rotation2d())
-        # )
 
         # Novelty Battery Percentage
         self.minVoltage = 11.9

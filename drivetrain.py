@@ -19,6 +19,9 @@ from wpimath.kinematics import MecanumDriveOdometry
 from wpimath.geometry import Pose2d
 from wpimath.geometry import Rotation2d
 from wpimath.controller import PIDController
+from pathplannerlib.auto import AutoBuilder
+from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig, PIDConstants
+from wpilib import DriverStation
 
 import math
 
