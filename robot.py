@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) FIRST and other WPILib contributors.
+# Copyright (c) Fathom Robotics
 # Open Source Software; you can modify and/or share it under the terms of
 # the WPILib BSD license file in the root directory of this project.
 #
@@ -24,6 +24,43 @@ from wpimath.geometry import Pose2d
 from wpimath.geometry import Rotation2d
 from wpimath.controller import PIDController
 # python -m robotpy deploy --nc --skip-tests
+
+
+class ActuatorSystemModeManager:
+    def __init__(self):
+        self.Mode = None
+        self.Idle = 0
+        self.Intaking = 1
+        self.Shooting = 2
+        self.Amping = 3
+        self.Reset = 4
+
+    def toggleIntaking(self):
+        if self.Mode == self.Idle:
+            self.Mode = self.Intaking
+        else:
+            self.Mode = self.Idle
+
+    def toggleReset(self):
+        if self.Mode == self.Idle:
+            self.Mode = self.Reset
+        else:
+            self.Mode = self.Idle
+
+    def toggleAmping(self):
+        if self.Mode == self.Idle:
+            self.Mode = self.Amping
+        else:
+            self.Mode = self.Idle
+
+    def setIdle(self):
+        self.Mode = self.Idle
+
+    def toggleShooting(self):
+        if self.Mode == self.Idle:
+            self.Mode = self.Shooting
+        else:
+            self.Mode = self.Idle
 
 
 class MyRobot(wpilib.TimedRobot):
@@ -142,7 +179,6 @@ class MyRobot(wpilib.TimedRobot):
         # TODO: Implement Field 2d View
         # TODO: Implement Speedometer
         # TODO: Implement warning lights (Power Usage, Arm Limits, PDH Temp)
-        # TODO: Implement Shooter Indicator Light
         self.fieldPose = table.getStringTopic("fieldPose").publish()
         self.wristEncoderNetwork = table.getDoubleTopic("wristEncoderRaw").publish()
         self.armDownLimitSwitchNetwork = table.getBooleanTopic("ArmDownLimitSwitch").publish()
@@ -240,13 +276,13 @@ class MyRobot(wpilib.TimedRobot):
             self.wristISub.get(),
             self.wristDSub.get()
         )
-        # Arm Positions
-        self.armPositions = [0, 120]
+        # Arm Positions (0 is Down, 120 is Up)
+        self.armPositions = [0, 120, 198]
         self.currentArmPosition = 1
         self.armSPVar.set(120)
 
-        # Wrist Positions
-        self.wristPositions = [-1000, -4500]
+        # Wrist Positions (-1000 is Intake, -4500 is Idle)
+        self.wristPositions = [-1000, -4500, 0]
         self.currentWristPosition = 1
         self.wristSP.set(0)
 
@@ -254,6 +290,12 @@ class MyRobot(wpilib.TimedRobot):
         self.armEncoderReseting = False
         self.armPositionChanged = False
         self.autoArmDownStart = False
+        self.teleautoArmUp = False
+        self.teleautoWristOut = False
+
+        # Actuator Mode
+        self.actuatorMode = ActuatorSystemModeManager()
+        self.actuatorMode.setIdle()
 
     def robotPeriodic(self):
         self.armDownLimitSwitchNetwork.set(self.armDownLimitSwitch.get())
@@ -292,7 +334,7 @@ class MyRobot(wpilib.TimedRobot):
 
         # If Arm in position after wrist is in position shoot
         if self.autoArmDownStart and (self.armBuiltinEncoder.getPosition() <= 30):
-            self.intake.set(0.25)
+            self.intake.set(0.5)  # Spit note out of jaws
 
         if self.autoArmDownStart:
             self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), 0))
@@ -300,66 +342,65 @@ class MyRobot(wpilib.TimedRobot):
             self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), 120))
 
     def teleopInit(self):
-        self.arm.setIdleMode(self.arm.IdleMode.kBrake)
+
         # PID Variable Declaration
         self.armPID = PIDController(
             self.armPVarSub.get(),
             self.armIVarSub.get(),
             self.armDVarSub.get()
         )
+
+        # Start Compressor
         if self.compressor.getPressure() > 60:
             self.compressor.disable()
         else:
             self.compressor.enableDigital()
+
         self.compressor.enableDigital()
+
+        # Reset Encoders
         self.frontLeftMotorEncoder.reset()
         self.rearLeftMotorEncoder.reset()
         self.frontRightMotorEncoder.reset()
         self.rearRightMotorEncoder.reset()
+        # TODO: Make sure that this encoder is not reset in a match (IF FMS ATTACHED)
         self.armBuiltinEncoder.setPosition(198)
         self.wristEncoder.reset()
-        self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-        self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-        self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-        self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
+
+        self.actuatorMode.setIdle()  # Set the Actuator mode to Idle
+
+        self.coastMotors()  # Make Motors Coast at start
+
+        self.arm.setIdleMode(self.arm.IdleMode.kBrake)  # Enable Arm Breaking
 
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
-        # Break Button
+        # Break Button (Driver 1 B)
         if self.driver1.getBButton():
-            self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
-            self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
-            self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
-            self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
+            self.breakMotors()
         else:
-            self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-            self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-            self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-            self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-        # Set Arm Setpoint
+            self.coastMotors()
+
+        # Intake Button
         if self.driver2.getBButtonReleased():
-            if self.currentArmPosition == (len(self.armPositions) - 1):
-                self.currentArmPosition = 0
-            else:
-                self.currentArmPosition += 1
-            self.armSPVar.set(self.armPositions[self.currentArmPosition])
+            self.actuatorMode.toggleIntaking()
 
-        # Set Wrist Setpoint
+        # Amp Button
         if self.driver2.getAButtonReleased():
-            if self.currentWristPosition == (len(self.wristPositions) - 1):
-                self.currentWristPosition = 0
-            else:
-                self.currentWristPosition += 1
-            self.wristSP.set(self.wristPositions[self.currentWristPosition])
+            self.actuatorMode.toggleAmping()
 
+        # Shoot Button
+        if self.driver2.getXButtonReleased():
+            self.actuatorMode.toggleShooting()
+
+        # Reset Button
         if self.driver2.getYButtonReleased():
-            if self.currentWristPosition == 0:
-                self.currentWristPosition = (len(self.wristPositions) - 1)
-            else:
-                self.currentWristPosition -= 1
-            self.wristSP.set(self.wristPositions[self.currentWristPosition])
+            self.actuatorMode.toggleReset()
 
-        # Toggle Shooter
+        # Toggle Inverted Base Controls
+
+        if self.driver1.getLeftStickButtonReleased():
+            self.stickXYToggle = not self.stickXYToggle
 
         if self.stickXYToggle:
             y = self.driver1.getLeftY()
@@ -370,21 +411,62 @@ class MyRobot(wpilib.TimedRobot):
             y = -self.driver1.getLeftX()
             rx = -self.driver1.getRightX()
 
-        if self.driver1.getLeftStickButtonReleased():
-            self.stickXYToggle = not self.stickXYToggle
-
         Idiot_y = math.pow(y, 3)
         Idiot_x = math.pow(x, 3)
         Idiot_rx = math.pow(rx, 3)
 
         self.drive.driveCartesian(Idiot_x, Idiot_y, Idiot_rx, -self.gyro.getRotation2d())
 
-        if self.driver2.getRightTriggerAxis() > self.driver2.getLeftTriggerAxis():
-            self.intake.set(self.driver2.getRightTriggerAxis())
-        else:
-            self.intake.set(-self.driver2.getLeftTriggerAxis())
+        # Actuator Mode Logic
+        if self.actuatorMode.Mode == self.actuatorMode.Idle:
+            self.currentArmPosition = 0  # Arm Down
+            self.currentWristPosition = 1  # Idle Wrist Position
+            self.shooterOn = False
+            # Note position can be changed
+            # TODO: Make changeable safer with DPad Instead
+            if self.driver2.getRightTriggerAxis() > self.driver2.getLeftTriggerAxis():
+                self.intake.set(self.driver2.getRightTriggerAxis())
+            else:
+                self.intake.set(-self.driver2.getLeftTriggerAxis())
 
-        # TODO: Make shooter be controlled by Driver 2 left bumper
+            # Reset TeleAuto Vars
+            self.teleautoArmUp = False
+            self.teleautoWristOut = False
+        elif self.actuatorMode.Mode == self.actuatorMode.Intaking:
+            self.currentArmPosition = 0  # Arm Down
+            self.currentWristPosition = 0  # Wrist Down
+            self.shooterOn = False
+            self.intake.set(-1)
+        elif self.actuatorMode.Mode == self.actuatorMode.Shooting:
+            self.currentArmPosition = 0  # Arm Down
+            self.currentWristPosition = 1  # Idle Wrist Position
+            self.shooterOn = True
+            self.intake.set(0)
+            if self.shooterEncoder.getVelocity() > 3000:
+                self.intake.set(0.5)  # Spit note out of jaws
+            # If shooter spun and intake reversed for x revolutions, set mode to idle
+        elif self.actuatorMode.Mode == self.actuatorMode.Amping:
+            self.currentArmPosition = 1  # Arm Up
+            self.currentWristPosition = 1  # Idle Wrist Position
+            self.shooterOn = False
+            self.intake.set(0)
+            if self.armBuiltinEncoder.getPosition() >= 110:
+                self.teleautoArmUp = True
+            if self.teleautoArmUp is True:
+                self.currentWristPosition = 0
+            # -1000 is Out of perimeter, -4000 is Safe
+            if self.teleautoArmUp and self.wristEncoder.get() >= -1100:
+                self.teleautoWristOut = True
+
+            if self.teleautoArmUp and self.teleautoWristOut:  # If Arm up and wrist position is flipped then drop note
+                self.intake.set(0.5)  # Spit note out of jaws
+
+            # TODO: If intake/outake spins for x amount of revolutions set mode to idle
+        elif self.actuatorMode.Mode == self.actuatorMode.Reset:
+            self.currentArmPosition = 2
+            self.currentWristPosition = 2
+
+        # Safety Switches and Arm
         if self.armDownLimitSwitch.get() is False:
             self.arm.set(0.05)
             if self.armEncoderReseting is False:
@@ -394,27 +476,19 @@ class MyRobot(wpilib.TimedRobot):
             self.arm.set(-0.125)
         else:
             self.armEncoderReseting = False
-            self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), self.armSPVarSub.get()))
+            self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), self.armPositions[self.currentArmPosition]))
 
-        self.wrist.set(-0.004*self.wristPID.calculate(self.wristEncoder.get(), self.wristSPSub.get()))
+        # Wrist Feedback Controller
 
-        if self.driver2.getXButtonReleased():
-            self.shooterOn = not self.shooterOn
+        self.wrist.set(-0.004*self.wristPID.calculate(self.wristEncoder.get(), self.wristPositions[self.currentWristPosition]))
 
+        # Shooter Feedback and Feedforward Controller
         if self.shooterOn:
             self.shooter.set(0.005*self.shooterPID.calculate(self.shooterEncoder.getVelocity(), 3500) + self.shooterVValueSub.get())
             self.shooterHelper.set(-0.005*self.shooterHelperPID.calculate(self.shooterHelperEncoder.getVelocity(), 3500) - self.shooterHelperVValueSub.get())
         else:
             self.shooter.set(0)
             self.shooterHelper.set(0)
-
-        # self.shooter.set(self.driver1.getLeftTriggerAxis())
-        # self.shooterHelper.set(-self.driver1.getLeftTriggerAxis())
-
-        self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
-        self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
-        self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
-        self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
 
         if self.driver1.getYButtonReleased():
             self.solenoidRed.set(False)
@@ -430,8 +504,29 @@ class MyRobot(wpilib.TimedRobot):
         self.armEncoderValueNet.set(self.armBuiltinEncoder.getPosition())
         self.shooterRPM.set(self.shooterEncoder.getVelocity())
         self.shooterHelperRPM.set(self.shooterHelperEncoder.getVelocity())
-        # 3000 In middle
-        # TODO: Add shooter ready
+        self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+        self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+        self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+        self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+
+        # Manual Code Graveyard
+        # TODO: Implement oh shoot manual mode
+
+        # This code was for wrist
+        # if self.driver2.getAButtonReleased():
+        #     if self.currentWristPosition == (len(self.wristPositions) - 1):
+        #         self.currentWristPosition = 0
+        #     else:
+        #         self.currentWristPosition += 1
+        #     self.wristSP.set(self.wristPositions[self.currentWristPosition])
+
+        # This code used to be for shooter
+        # if self.driver2.getXButtonReleased():
+        #     self.shooterOn = not self.shooterOn
+
+        # This was the manual code for shooter
+        # self.shooter.set(self.driver1.getLeftTriggerAxis())
+        # self.shooterHelper.set(-self.driver1.getLeftTriggerAxis())
 
     def disabledInit(self):
         self.arm.setIdleMode(self.arm.IdleMode.kCoast)
@@ -460,6 +555,18 @@ class MyRobot(wpilib.TimedRobot):
             self.wristDSub.get()
         )
         self.currentArmPosition = 0
+
+    def coastMotors(self):
+        self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
+        self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
+        self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
+        self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
+
+    def breakMotors(self):
+        self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
+        self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
+        self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
+        self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
 
 
 
