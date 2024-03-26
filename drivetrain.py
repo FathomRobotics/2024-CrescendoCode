@@ -26,9 +26,6 @@ import math
 class Drivetrain:
     """Represents a differential drive style drivetrain."""
 
-    kMaxSpeed = 3.0  # 3 meters per second
-    kMaxAngularSpeed = math.pi  # 1/2 rotation per second
-
     def resetGryoThread(self):
         time.sleep(1)
         self.gyro.reset()

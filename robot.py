@@ -307,6 +307,7 @@ class MyRobot(wpilib.TimedRobot):
         # self.fieldPose.set(str(self.pose))
         # if self.powerDistribution.getTotalCurrent() < self.maxCurrentDrawWhenCheckingPercentage:
         #     self.BatteryPercentageEstimationTopic.set((self.powerDistribution.getVoltage() - self.minVoltage) / self._maxmandiffVoltage)
+        self.mecanum.updateOdometry()
 
     def resetGryoThread(self):
         time.sleep(1)
