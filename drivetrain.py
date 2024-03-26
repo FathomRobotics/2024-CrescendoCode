@@ -5,6 +5,7 @@
 #
 
 import wpilib.drive
+import navx
 import wpimath.controller
 import wpimath.geometry
 from wpimath.kinematics import ChassisSpeeds
@@ -28,6 +29,10 @@ class Drivetrain:
     kMaxSpeed = 3.0  # 3 meters per second
     kMaxAngularSpeed = math.pi  # 1/2 rotation per second
 
+    def resetGryoThread(self):
+        time.sleep(1)
+        self.gyro.reset()
+
     def __init__(self):
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
         self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
@@ -49,7 +54,9 @@ class Drivetrain:
         self.rearLeftPIDController = wpimath.controller.PIDController(1, 0, 0)
         self.rearRightPIDController = wpimath.controller.PIDController(1, 0, 0)
 
-        self.gyro = phoenix5.sensors.Pigeon2(5)
+        self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
+        gyroThread = threading.Thread(target=self.resetGryoThread)
+        gyroThread.run()
 
         self.kinematics = wpimath.kinematics.MecanumDriveKinematics(
             frontLeftLocation, frontRightLocation, rearLeftLocation, rearRightLocation
@@ -67,26 +74,25 @@ class Drivetrain:
         # We need to invert one side of the drivetrain so that positive voltages
         # result in both sides moving forward. Depending on how your robot's
         # gearbox is constructed, you might have to invert the left side instead.
-        self.frontRightMotor.setInverted(True)
-        self.rearRightMotor.setInverted(True)
+        self.rearLeftMotor.setInverted(True)
 
     def getCurrentState(self) -> wpimath.kinematics.MecanumDriveWheelSpeeds:
         """Returns the current state of the drivetrain."""
         return wpimath.kinematics.MecanumDriveWheelSpeeds(
-            self.frontLeftEncoder.getRate(),
-            self.frontRightEncoder.getRate(),
-            self.rearLeftEncoder.getRate(),
-            self.rearRightEncoder.getRate(),
+            self.frontLeftMotorEncoder.getRate(),
+            self.frontRightMotorEncoder.getRate(),
+            self.rearLeftMotorEncoder.getRate(),
+            self.rearRightMotorEncoder.getRate(),
         )
 
     def getCurrentDistances(self) -> wpimath.kinematics.MecanumDriveWheelPositions:
         """Returns the current distances measured by the drivetrain."""
         pos = wpimath.kinematics.MecanumDriveWheelPositions()
 
-        pos.frontLeft = self.frontLeftEncoder.getDistance()
-        pos.frontRight = self.frontRightEncoder.getDistance()
-        pos.rearLeft = self.rearLeftEncoder.getDistance()
-        pos.rearRight = self.rearRightEncoder.getDistance()
+        pos.frontLeft = self.frontLeftMotorEncoder.getDistance()
+        pos.frontRight = self.frontRightMotorEncoder.getDistance()
+        pos.rearLeft = self.rearLeftMotorEncoder.getDistance()
+        pos.rearRight = self.rearRightMotorEncoder.getDistance()
 
         return pos
 
@@ -142,3 +148,15 @@ class Drivetrain:
     def updateOdometry(self):
         """Updates the field-relative position."""
         self.odometry.update(self.gyro.getRotation2d(), self.getCurrentDistances())
+
+    def coastMotors(self):
+        self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
+        self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
+        self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
+        self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
+
+    def breakMotors(self):
+        self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
+        self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
+        self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
+        self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Brake)

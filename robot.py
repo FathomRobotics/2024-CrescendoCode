@@ -148,15 +148,15 @@ class MyRobot(wpilib.TimedRobot):
         self.armDownLimitSwitch = wpilib.DigitalInput(9)
         self.armUpLimitSwitch = wpilib.DigitalInput(8)
 
-        # Drive Train Configuration
-        self.rearLeftMotor.setInverted(True)
-
-        self.drive = wpilib.drive.MecanumDrive(
-            self.frontLeftMotor,
-            self.rearLeftMotor,
-            self.frontRightMotor,
-            self.rearRightMotor,
-        )
+        # # Drive Train Configuration
+        # self.rearLeftMotor.setInverted(True)
+        #
+        # self.drive = wpilib.drive.MecanumDrive(
+        #     self.frontLeftMotor,
+        #     self.rearLeftMotor,
+        #     self.frontRightMotor,
+        #     self.rearRightMotor,
+        # )
 
         # Pneumatics Hub Devices
         self.solenoidRed = self.pnumaticsHub.makeSolenoid(0)
@@ -552,19 +552,6 @@ class MyRobot(wpilib.TimedRobot):
             self.wristDSub.get()
         )
         self.currentArmPosition = 0
-
-    def coastMotors(self):
-        self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-        self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-        self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-        self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-
-    def breakMotors(self):
-        self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
-        self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
-        self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
-        self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
-
 
 
 if __name__ == "__main__":
