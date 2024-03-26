@@ -26,6 +26,25 @@ from wpimath.controller import PIDController
 # python -m robotpy deploy --nc --skip-tests
 
 
+class ActuatorSystemModeManager:
+    def __init__(self):
+        self.Mode = None
+        self.Idle = 0
+        self.Intaking = 1
+        self.Shooting = 2
+        self.Amping = 3
+
+    def setModeToAmping(self):
+        self.Mode = self.Amping
+    
+    def setModeToIdle(self):
+        self.Mode = self.Idle
+
+    def setModeToShooting(self):
+        self.Mode = self.Shooting
+
+
+
 class MyRobot(wpilib.TimedRobot):
     """
     This is a demo program showing how to use Mecanum control with the
