@@ -23,6 +23,9 @@ from wpimath.kinematics import MecanumDriveOdometry
 from wpimath.geometry import Pose2d
 from wpimath.geometry import Rotation2d
 from wpimath.controller import PIDController
+import wpimath.filter
+
+# from drivetrain import Drivetrain
 # python -m robotpy deploy --nc --skip-tests
 
 
@@ -76,6 +79,7 @@ class MyRobot(wpilib.TimedRobot):
         # 21.375in Wide
         # 20.5in Long
         #
+        self.mecanum = Drivetrain()
 
         # NavX Initialization
         self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
@@ -83,10 +87,10 @@ class MyRobot(wpilib.TimedRobot):
         gyroThread.run()
 
         # DIO Encoders
-        self.frontLeftMotorEncoder = wpilib.Encoder(0, 1)
-        self.rearLeftMotorEncoder = wpilib.Encoder(2, 3)
-        self.frontRightMotorEncoder = wpilib.Encoder(4, 5)
-        self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
+        # self.frontLeftMotorEncoder = wpilib.Encoder(0, 1)
+        # self.rearLeftMotorEncoder = wpilib.Encoder(2, 3)
+        # self.frontRightMotorEncoder = wpilib.Encoder(4, 5)
+        # self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
         self.wristEncoder = wpilib.Encoder(23, 22)
 
         # frontLeftLocation = Translation2d(0.2713, 0.2715)
@@ -111,18 +115,6 @@ class MyRobot(wpilib.TimedRobot):
         #     ),
         #     Pose2d(5.0, 13.5, Rotation2d())
         # )
-        #
-        # # Get my wheel positions
-        # wheelPositions = wpimath.kinematics.MecanumDriveWheelPositions(
-        #     self.frontLeftMotorEncoder.getDistance(), self.frontRightMotorEncoder.getDistance(),
-        #     self.rearLeftMotorEncoder.getDistance(), self.rearRightMotorEncoder.getDistance()
-        # )
-        #
-        # # Get the rotation of the robot from the gyro.
-        # gyroAngle = self.gyro.getRotation2d()
-        #
-        # # Update the pose
-        # self.pose = odometry.update(gyroAngle, wheelPositions)
 
         # Novelty Battery Percentage
         self.minVoltage = 11.9
@@ -135,10 +127,10 @@ class MyRobot(wpilib.TimedRobot):
         self.powerDistribution = wpilib.PowerDistribution()
 
         # Control Devices
-        self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
-        self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
-        self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
-        self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
+        # self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
+        # self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
+        # self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
+        # self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
         self.pidgen = phoenix5.sensors.Pigeon2(5)
         self.intake = rev.CANSparkMax(7, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.arm = rev.CANSparkMax(8, type=rev.CANSparkLowLevel.MotorType.kBrushless)
@@ -301,6 +293,17 @@ class MyRobot(wpilib.TimedRobot):
         self.armDownLimitSwitchNetwork.set(self.armDownLimitSwitch.get())
         self.armUpLimitSwitchNetwork.set(self.armUpLimitSwitch.get())
         self.wristEncoderNetwork.set(self.wristEncoder.get())
+        # Get my wheel positions
+        # wheelPositions = wpimath.kinematics.MecanumDriveWheelPositions(
+        #     self.frontLeftMotorEncoder.getDistance(), self.frontRightMotorEncoder.getDistance(),
+        #     self.rearLeftMotorEncoder.getDistance(), self.rearRightMotorEncoder.getDistance()
+        # )
+        #
+        # # Get the rotation of the robot from the gyro.
+        # gyroAngle = self.gyro.getRotation2d()
+        #
+        # # Update the pose
+        # self.pose = odometry.update(gyroAngle, wheelPositions)
         # self.fieldPose.set(str(self.pose))
         # if self.powerDistribution.getTotalCurrent() < self.maxCurrentDrawWhenCheckingPercentage:
         #     self.BatteryPercentageEstimationTopic.set((self.powerDistribution.getVoltage() - self.minVoltage) / self._maxmandiffVoltage)
@@ -314,12 +317,6 @@ class MyRobot(wpilib.TimedRobot):
         # https://github.com/robotpy/examples/blob/main/GyroDriveCommands/commands/turntoangle.py
         # https://docs.wpilib.org/en/stable/docs/software/pathplanning/trajectory-tutorial/characterizing-drive.html
         # https://docs.wpilib.org/en/stable/docs/software/advanced-controls/index.html
-
-        # # Get my wheel positions
-        # wheelPositions = wpimath.kinematics.MecanumDriveWheelPositions(
-        #     self.frontLeftMotorEncoder.getDistance(), self.frontRightMotorEncoder.getDistance(),
-        #     self.rearLeftMotorEncoder.getDistance(), self.rearRightMotorEncoder.getDistance()
-        # )
 
         # Get the rotation of the robot from the gyro.
         # Put Wrist Into Shooting Position
