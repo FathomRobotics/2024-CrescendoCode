@@ -22,12 +22,17 @@ from wpimath.controller import PIDController
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig, PIDConstants
 from wpilib import DriverStation
+import threading
+import time
 
 import math
 
 
 class Drivetrain:
     """Represents a differential drive style drivetrain."""
+
+    kMaxSpeed = 3.0  # 3 meters per second
+    kMaxAngularSpeed = math.pi  # 1/2 rotation per second
 
     def resetGryoThread(self):
         time.sleep(1)
@@ -63,7 +68,7 @@ class Drivetrain:
         )
 
         self.odometry = wpimath.kinematics.MecanumDriveOdometry(
-            self.kinematics, self.gyro.getRawGyro(), self.getCurrentDistances()
+            self.kinematics, self.gyro.getRotation2d(), self.getCurrentDistances()
         )
 
         # Gains are for example purposes only - must be determined for your own robot!
@@ -104,16 +109,16 @@ class Drivetrain:
         rearRightFeedforward = self.feedforward.calculate(speeds.rearRight)
 
         frontLeftOutput = self.frontLeftPIDController.calculate(
-            self.frontLeftEncoder.getRate(), speeds.frontLeft
+            self.frontLeftMotorEncoder.getRate(), speeds.frontLeft
         )
         frontRightOutput = self.frontRightPIDController.calculate(
-            self.frontRightEncoder.getRate(), speeds.frontRight
+            self.frontRightMotorEncoder.getRate(), speeds.frontRight
         )
         rearLeftOutput = self.frontLeftPIDController.calculate(
-            self.rearLeftEncoder.getRate(), speeds.rearLeft
+            self.rearLeftMotorEncoder.getRate(), speeds.rearLeft
         )
         rearRightOutput = self.frontRightPIDController.calculate(
-            self.rearRightEncoder.getRate(), speeds.rearRight
+            self.rearRightMotorEncoder.getRate(), speeds.rearRight
         )
 
         self.frontLeftMotor.setVoltage(frontLeftOutput + frontLeftFeedforward)

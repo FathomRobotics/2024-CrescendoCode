@@ -126,7 +126,7 @@ class MyRobot(wpilib.TimedRobot):
         self.solenoidBlue = self.pnumaticsHub.makeSolenoid(1)
         self.compressor = self.pnumaticsHub.makeCompressor()
         self.compressor.isEnabled()
-        self.frontLeftMotor.setInverted(True)
+        # self.frontLeftMotor.setInverted(True)
 
         # Network Tables Initialization
         inst = ntcore.NetworkTableInstance.getDefault()
@@ -319,17 +319,17 @@ class MyRobot(wpilib.TimedRobot):
         self.compressor.enableDigital()
 
         # Reset Encoders
-        self.frontLeftMotorEncoder.reset()
-        self.rearLeftMotorEncoder.reset()
-        self.frontRightMotorEncoder.reset()
-        self.rearRightMotorEncoder.reset()
+        # self.frontLeftMotorEncoder.reset()
+        # self.rearLeftMotorEncoder.reset()
+        # self.frontRightMotorEncoder.reset()
+        # self.rearRightMotorEncoder.reset()
         # TODO: Make sure that this encoder is not reset in a match (IF FMS ATTACHED)
         self.armBuiltinEncoder.setPosition(198)
         self.wristEncoder.reset()
 
         self.actuatorMode.setIdle()  # Set the Actuator mode to Idle
 
-        self.coastMotors()  # Make Motors Coast at start
+        self.mecanum.coastMotors()  # Make Motors Coast at start
 
         self.arm.setIdleMode(self.arm.IdleMode.kBrake)  # Enable Arm Breaking
 
@@ -337,9 +337,9 @@ class MyRobot(wpilib.TimedRobot):
         """Runs the motors with Mecanum drive."""
         # Break Button (Driver 1 B)
         if self.driver1.getBButton():
-            self.breakMotors()
+            self.mechanum.breakMotors()
         else:
-            self.coastMotors()
+            self.mecanum.coastMotors()
 
         # Intake Button
         if self.driver2.getBButtonReleased():
@@ -468,10 +468,10 @@ class MyRobot(wpilib.TimedRobot):
         self.armEncoderValueNet.set(self.armBuiltinEncoder.getPosition())
         self.shooterRPM.set(self.shooterEncoder.getVelocity())
         self.shooterHelperRPM.set(self.shooterHelperEncoder.getVelocity())
-        self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
-        self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
-        self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
-        self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+        # self.frontLeftMotorEncoderNetworkTopic.set((self.frontLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+        # self.rearLeftMotorEncoderNetworkTopic.set((self.rearLeftMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+        # self.frontRightMotorEncoderNetworkTopic.set((self.frontRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
+        # self.rearRightMotorEncoderNetworkTopic.set((self.rearRightMotorEncoder.getRaw() / 10000) * 6 * math.pi)
 
         # Manual Code Graveyard
         # TODO: Implement oh shoot manual mode
