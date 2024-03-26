@@ -121,16 +121,6 @@ class MyRobot(wpilib.TimedRobot):
         self.armDownLimitSwitch = wpilib.DigitalInput(9)
         self.armUpLimitSwitch = wpilib.DigitalInput(8)
 
-        # # Drive Train Configuration
-        # self.rearLeftMotor.setInverted(True)
-        #
-        # self.drive = wpilib.drive.MecanumDrive(
-        #     self.frontLeftMotor,
-        #     self.rearLeftMotor,
-        #     self.frontRightMotor,
-        #     self.rearRightMotor,
-        # )
-
         # Pneumatics Hub Devices
         self.solenoidRed = self.pnumaticsHub.makeSolenoid(0)
         self.solenoidBlue = self.pnumaticsHub.makeSolenoid(1)
@@ -275,11 +265,10 @@ class MyRobot(wpilib.TimedRobot):
         # # Get the rotation of the robot from the gyro.
         # gyroAngle = self.gyro.getRotation2d()
         #
-        # # Update the pose
-        # self.pose = odometry.update(gyroAngle, wheelPositions)
-        # self.fieldPose.set(str(self.pose))
+        # # Update the pose self.pose = odometry.update(gyroAngle, wheelPositions) self.fieldPose.set(str(self.pose))
         # if self.powerDistribution.getTotalCurrent() < self.maxCurrentDrawWhenCheckingPercentage:
-        #     self.BatteryPercentageEstimationTopic.set((self.powerDistribution.getVoltage() - self.minVoltage) / self._maxmandiffVoltage)
+        # self.BatteryPercentageEstimationTopic.set((self.powerDistribution.getVoltage() - self.minVoltage) /
+        # self._maxmandiffVoltage)
         self.mecanum.updateOdometry()
 
     def resetGryoThread(self):
@@ -393,8 +382,6 @@ class MyRobot(wpilib.TimedRobot):
             self.currentArmPosition = 0  # Arm Down
             self.currentWristPosition = 1  # Idle Wrist Position
             self.shooterOn = False
-            # Note position can be changed
-            # TODO: Make changeable safer with DPad Instead
             if self.driver2.getRightTriggerAxis() > self.driver2.getLeftTriggerAxis():
                 self.intake.set(self.driver2.getRightTriggerAxis())
             else:
@@ -429,8 +416,14 @@ class MyRobot(wpilib.TimedRobot):
             if self.teleautoArmUp and self.wristEncoder.get() >= -1100:
                 self.teleautoWristOut = True
 
+            if self.driver2.getRightTriggerAxis() > self.driver2.getLeftTriggerAxis():
+                self.intake.set(self.driver2.getRightTriggerAxis())
+            else:
+                self.intake.set(-self.driver2.getLeftTriggerAxis())
+
             if self.teleautoArmUp and self.teleautoWristOut:  # If Arm up and wrist position is flipped then drop note
-                self.intake.set(0.5)  # Spit note out of jaws
+                # TODO: Add driver 2 rumble
+                pass
 
             # TODO: If intake/outake spins for x amount of revolutions set mode to idle
         elif self.actuatorMode.Mode == self.actuatorMode.Reset:
