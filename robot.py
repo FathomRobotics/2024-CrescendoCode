@@ -25,7 +25,7 @@ from wpimath.geometry import Rotation2d
 from wpimath.controller import PIDController
 import wpimath.filter
 
-# from drivetrain import Drivetrain
+from drivetrain import Drivetrain
 # python -m robotpy deploy --nc --skip-tests
 
 
@@ -412,7 +412,7 @@ class MyRobot(wpilib.TimedRobot):
         Idiot_x = math.pow(x, 3)
         Idiot_rx = math.pow(rx, 3)
 
-        self.drive.driveCartesian(Idiot_x, Idiot_y, Idiot_rx, -self.gyro.getRotation2d())
+        self.mecanum.drive(Idiot_x, Idiot_y, Idiot_rx, True, self.getPeriod())
 
         # Actuator Mode Logic
         if self.actuatorMode.Mode == self.actuatorMode.Idle:

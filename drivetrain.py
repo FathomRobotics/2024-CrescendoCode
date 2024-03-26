@@ -9,6 +9,15 @@ import wpimath.controller
 import wpimath.geometry
 from wpimath.kinematics import ChassisSpeeds
 import wpimath.units
+import phoenix5
+import phoenix5.sensors
+from wpimath.geometry import Translation2d
+from wpimath.kinematics import MecanumDriveKinematics
+from wpimath.kinematics import MecanumDriveWheelPositions
+from wpimath.kinematics import MecanumDriveOdometry
+from wpimath.geometry import Pose2d
+from wpimath.geometry import Rotation2d
+from wpimath.controller import PIDController
 
 import math
 
@@ -47,7 +56,7 @@ class Drivetrain:
         )
 
         self.odometry = wpimath.kinematics.MecanumDriveOdometry(
-            self.kinematics, self.gyro.getRotation2d(), self.getCurrentDistances()
+            self.kinematics, self.gyro.getRawGyro(), self.getCurrentDistances()
         )
 
         # Gains are for example purposes only - must be determined for your own robot!
