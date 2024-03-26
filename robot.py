@@ -274,7 +274,7 @@ class MyRobot(wpilib.TimedRobot):
         self.armSPVar.set(120)
 
         # Wrist Positions (-1000 is Intake, -4500 is Idle)
-        self.wristPositions = [-1000, -4500, 0]
+        self.wristPositions = [-1000, -4500, 0, -4200]
         self.currentWristPosition = 1
         self.wristSP.set(0)
 
@@ -401,7 +401,7 @@ class MyRobot(wpilib.TimedRobot):
 
         if self.stickXYToggle:
             y = self.driver1.getLeftY()
-            x = -self.driver1.getLeftX()
+            x = self.driver1.getLeftX()
             rx = -self.driver1.getRightX()
         else:
             x = self.driver1.getLeftY()
@@ -444,7 +444,7 @@ class MyRobot(wpilib.TimedRobot):
             # If shooter spun and intake reversed for x revolutions, set mode to idle
         elif self.actuatorMode.Mode == self.actuatorMode.Amping:
             self.currentArmPosition = 1  # Arm Up
-            self.currentWristPosition = 1  # Idle Wrist Position
+            self.currentWristPosition = 3  # Idle Wrist Position
             self.shooterOn = False
             self.intake.set(0)
             if self.armBuiltinEncoder.getPosition() >= 110:
