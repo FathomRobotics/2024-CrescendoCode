@@ -81,6 +81,11 @@ class MyRobot(wpilib.TimedRobot):
         #
         self.mecanum = Drivetrain()
 
+        # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
+        self.xspeedLimiter = wpimath.filter.SlewRateLimiter(3)
+        self.yspeedLimiter = wpimath.filter.SlewRateLimiter(3)
+        self.rotLimiter = wpimath.filter.SlewRateLimiter(3)
+
         # NavX Initialization
         self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
         gyroThread = threading.Thread(target=self.resetGryoThread)
@@ -374,8 +379,29 @@ class MyRobot(wpilib.TimedRobot):
         Idiot_y = math.pow(y, 3)
         Idiot_x = math.pow(x, 3)
         Idiot_rx = math.pow(rx, 3)
+        xSpeed = (
+                -self.xspeedLimiter.calculate(Idiot_y)
+                * Drivetrain.kMaxSpeed
+        )
 
-        self.mecanum.drive(Idiot_x, Idiot_y, Idiot_rx, True, self.getPeriod())
+        # Get the y speed or sideways/strafe speed. We are inverting this because
+        # we want a positive value when we pull to the left. Xbox controllers
+        # return positive values when you pull to the right by default.
+        ySpeed = (
+                -self.yspeedLimiter.calculate(Idiot_x)
+                * Drivetrain.kMaxSpeed
+        )
+
+        # Get the rate of angular rotation. We are inverting this because we want a
+        # positive value when we pull to the left (remember, CCW is positive in
+        # mathematics). Xbox's controllers return positive values when you pull to
+        # the right by default.
+        rot = (
+                -self.rotLimiter.calculate(Idiot_rx)
+                * Drivetrain.kMaxAngularSpeed
+        )
+
+        self.mecanum.drive(xSpeed, ySpeed, rot, True, self.getPeriod())
 
         # Actuator Mode Logic
         if self.actuatorMode.Mode == self.actuatorMode.Idle:
