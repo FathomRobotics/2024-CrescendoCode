@@ -54,7 +54,7 @@ class Drivetrain:
         rearLeftLocation = Translation2d(-0.2713, 0.2715)
         rearRightLocation = Translation2d(-0.2713, -0.2715)
 
-        self.frontLeftPIDController = wpimath.controller.PIDController(1, 0, 0)
+        self.frontLeftPIDController = wpimath.controller.PIDController(0.001, 0, 0)
         self.frontRightPIDController = wpimath.controller.PIDController(1, 0, 0)
         self.rearLeftPIDController = wpimath.controller.PIDController(1, 0, 0)
         self.rearRightPIDController = wpimath.controller.PIDController(1, 0, 0)
