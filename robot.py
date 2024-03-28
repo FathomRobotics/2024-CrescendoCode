@@ -152,7 +152,7 @@ class MyRobot(wpilib.TimedRobot):
         self.armPVar = table.getDoubleTopic("Arm_P").publish()
         self.armIVar = table.getDoubleTopic("Arm_I").publish()
         self.armDVar = table.getDoubleTopic("Arm_D").publish()
-        self.armPVar.set(0.02)
+        self.armPVar.set(0.01)
         self.armIVar.set(0)
         self.armDVar.set(0)
         self.armSPVar = table.getDoubleTopic("Arm_SP").publish()
@@ -184,7 +184,7 @@ class MyRobot(wpilib.TimedRobot):
         self.shooterHelperDValue.set(0)
 
         self.wristP = table.getDoubleTopic("WristP").publish()
-        self.wristP.set(0.05)
+        self.wristP.set(0.025)
         self.wristI = table.getDoubleTopic("WristI").publish()
         self.wristI.set(0)
         self.wristD = table.getDoubleTopic("WristD").publish()
