@@ -81,7 +81,6 @@ class MyRobot(wpilib.TimedRobot):
         # 20.5in Long
         #
         self.robotContainer = RobotContainer()
-        self.samAuto = self.robotContainer.getAutonomousCommand()
         # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
         self.xspeedLimiter = wpimath.filter.SlewRateLimiter(3)
         self.yspeedLimiter = wpimath.filter.SlewRateLimiter(3)
@@ -282,7 +281,9 @@ class MyRobot(wpilib.TimedRobot):
         self.gyro.reset()
 
     def autonomousInit(self):
-        self.samAuto.
+        self.autoCommand = self.robotContainer.getAutonomousCommand()
+        if autoCommand is not None:
+            autoCommand.schedule()
 
     def autonomousPeriodic(self):
         # Note: Look here
@@ -312,6 +313,8 @@ class MyRobot(wpilib.TimedRobot):
         pass
 
     def teleopInit(self):
+        if self.autoCommand is not None:
+            self.autoCommand.cancel()
 
         # PID Variable Declaration
         self.armPID = PIDController(
@@ -526,8 +529,11 @@ class MyRobot(wpilib.TimedRobot):
     def disabledInit(self):
         # self.arm.setIdleMode(self.arm.IdleMode.kCoast)
         self.compressor.disable()
+        if self.autoCommand is not None:
+            self.autoCommand.cancel()
 
     def disabledPeriodic(self):
+        self.autoCommand = self.robotContainer.getAutonomousCommand()
         # PID Variable Declaration
         self.armPID = PIDController(
             self.armPVarSub.get(),

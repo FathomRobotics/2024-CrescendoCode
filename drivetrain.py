@@ -39,6 +39,7 @@ class Drivetrain:
         self.gyro.reset()
 
     def __init__(self):
+        self.field = wpilib.Field2d()
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
         self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
         self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
@@ -114,8 +115,9 @@ class Drivetrain:
     def getPose(self):
         return self.odometry.getPose()
 
-    def resetPose(self, pose1, pose2, pose3):
-        self.odometry.resetPosition(pose1, pose2, pose3)
+    def resetPose(self, pose):
+        # TODO: https://github.com/mjansen4857/pathplanner/blob/d0e12f59430b869bde70180cb709e175b762fc67/examples/java/src/main/java/frc/robot/subsystems/SwerveSubsystem.java#L92
+        self.odometry.resetPosition(self.gyro.getRotation2d(), ?self.getPositions(), pose)
 
     def getRobotRelativeSpeeds(self):
         return self.getCurrentState()
