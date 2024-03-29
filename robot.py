@@ -26,6 +26,7 @@ from wpimath.controller import PIDController
 import wpimath.filter
 
 from drivetrain import Drivetrain
+from robotcontainer import RobotContainer
 # python -m robotpy deploy --nc --skip-tests
 
 
@@ -79,8 +80,8 @@ class MyRobot(wpilib.TimedRobot):
         # 21.375in Wide
         # 20.5in Long
         #
-        self.mecanum = Drivetrain()
-
+        self.robotContainer = RobotContainer()
+        self.samAuto = self.robotContainer.getAutonomousCommand()
         # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
         self.xspeedLimiter = wpimath.filter.SlewRateLimiter(3)
         self.yspeedLimiter = wpimath.filter.SlewRateLimiter(3)
@@ -280,6 +281,9 @@ class MyRobot(wpilib.TimedRobot):
         time.sleep(1)
         self.gyro.reset()
 
+    def autonomousInit(self):
+        self.samAuto.
+
     def autonomousPeriodic(self):
         # Note: Look here
         # https://github.com/robotpy/examples/blob/main/GyroDriveCommands/commands/turntoangle.py
@@ -288,23 +292,24 @@ class MyRobot(wpilib.TimedRobot):
 
         # Get the rotation of the robot from the gyro.
         # Put Wrist Into Shooting Position
-        self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4500))
+        # self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4500))
         # Start Shooter Motors
-        self.shooter.set(0.005 * self.shooterPID.calculate(self.shooterEncoder.getVelocity(), 3500) + self.shooterVValueSub.get())
-        self.shooterHelper.set(-0.005 * self.shooterHelperPID.calculate(self.shooterHelperEncoder.getVelocity(), 3500) - self.shooterHelperVValueSub.get())
+        # self.shooter.set(0.005 * self.shooterPID.calculate(self.shooterEncoder.getVelocity(), 3500) + self.shooterVValueSub.get())
+        # self.shooterHelper.set(-0.005 * self.shooterHelperPID.calculate(self.shooterHelperEncoder.getVelocity(), 3500) - self.shooterHelperVValueSub.get())
 
         # If Wrist in position start arm movement
-        if self.wristEncoder.get() <= -4400:
-            self.autoArmDownStart = True
+        # if self.wristEncoder.get() <= -4400:
+        #     self.autoArmDownStart = True
 
         # If Arm in position after wrist is in position shoot
-        if self.autoArmDownStart and (self.armBuiltinEncoder.getPosition() <= 30):
-            self.intake.set(0.5)  # Spit note out of jaws
+        # if self.autoArmDownStart and (self.armBuiltinEncoder.getPosition() <= 30):
+        #     self.intake.set(0.5)  # Spit note out of jaws
 
-        if self.autoArmDownStart:
-            self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), 0))
-        else:
-            self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), 120))
+        # if self.autoArmDownStart:
+        #     self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), 0))
+        # else:
+        #     self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), 120))
+        pass
 
     def teleopInit(self):
 
@@ -336,7 +341,7 @@ class MyRobot(wpilib.TimedRobot):
 
         self.mecanum.coastMotors()  # Make Motors Coast at start
 
-        self.arm.setIdleMode(self.arm.IdleMode.kBrake)  # Enable Arm Breaking
+        # self.arm.setIdleMode(self.arm.IdleMode.kBrake)  # Enable Arm Breaking
 
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
@@ -457,20 +462,20 @@ class MyRobot(wpilib.TimedRobot):
             self.currentWristPosition = 2
 
         # Safety Switches and Arm
-        if self.armDownLimitSwitch.get() is False:
-            self.arm.set(0.05)
-            if self.armEncoderReseting is False:
-                self.armBuiltinEncoder.setPosition(0)
-            self.armEncoderReseting = True
-        elif self.armUpLimitSwitch.get() is False:
-            self.arm.set(-0.125)
-        else:
-            self.armEncoderReseting = False
-            self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), self.armPositions[self.currentArmPosition]))
+        # if self.armDownLimitSwitch.get() is False:
+        #     self.arm.set(0.05)
+        #     if self.armEncoderReseting is False:
+        #         self.armBuiltinEncoder.setPosition(0)
+        #     self.armEncoderReseting = True
+        # elif self.armUpLimitSwitch.get() is False:
+        #     self.arm.set(-0.125)
+        # else:
+        #     self.armEncoderReseting = False
+        #     self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), self.armPositions[self.currentArmPosition]))
 
         # Wrist Feedback Controller
 
-        self.wrist.set(-0.004*self.wristPID.calculate(self.wristEncoder.get(), self.wristPositions[self.currentWristPosition]))
+        # self.wrist.set(-0.004*self.wristPID.calculate(self.wristEncoder.get(), self.wristPositions[self.currentWristPosition]))
 
         # Shooter Feedback and Feedforward Controller
         if self.shooterOn:
@@ -519,7 +524,7 @@ class MyRobot(wpilib.TimedRobot):
         # self.shooterHelper.set(-self.driver1.getLeftTriggerAxis())
 
     def disabledInit(self):
-        self.arm.setIdleMode(self.arm.IdleMode.kCoast)
+        # self.arm.setIdleMode(self.arm.IdleMode.kCoast)
         self.compressor.disable()
 
     def disabledPeriodic(self):

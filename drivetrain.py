@@ -32,7 +32,7 @@ class Drivetrain:
     """Represents a differential drive style drivetrain."""
 
     kMaxSpeed = 3.0  # 3 meters per second
-    kMaxAngularSpeed = math.pi  # 1/2 rotation per second
+    kMaxAngularSpeed = math.pi*2  # 1/2 rotation per second
 
     def resetGryoThread(self):
         time.sleep(1)
@@ -54,17 +54,14 @@ class Drivetrain:
         rearLeftLocation = Translation2d(-0.2713, 0.2715)
         rearRightLocation = Translation2d(-0.2713, -0.2715)
 
-<<<<<<< Updated upstream
-        self.frontLeftPIDController = wpimath.controller.PIDController(0.001, 0, 0)
-        self.frontRightPIDController = wpimath.controller.PIDController(1, 0, 0)
-        self.rearLeftPIDController = wpimath.controller.PIDController(1, 0, 0)
-        self.rearRightPIDController = wpimath.controller.PIDController(1, 0, 0)
-=======
-        self.frontLeftPIDController = wpimath.controller.PIDController(0.003, 0, 0)
-        self.frontRightPIDController = wpimath.controller.PIDController(0.003, 0, 0)
-        self.rearLeftPIDController = wpimath.controller.PIDController(0.003, 0, 0)
-        self.rearRightPIDController = wpimath.controller.PIDController(0.003, 0, 0)
->>>>>>> Stashed changes
+        # kP = 0.005 and kI 0.0001 Bad
+        kP = 0.0001
+        kI = 0
+        kD = 0
+        self.frontLeftPIDController = wpimath.controller.PIDController(kP, kI, kD)
+        self.frontRightPIDController = wpimath.controller.PIDController(kP, kI, kD)
+        self.rearLeftPIDController = wpimath.controller.PIDController(kP, kI, kD)
+        self.rearRightPIDController = wpimath.controller.PIDController(kP, kI, kD)
 
         self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
         gyroThread = threading.Thread(target=self.resetGryoThread)
@@ -79,14 +76,31 @@ class Drivetrain:
         )
 
         # Gains are for example purposes only - must be determined for your own robot!
-        self.feedforward = wpimath.controller.SimpleMotorFeedforwardMeters(1, 1)
+        self.feedforward = wpimath.controller.SimpleMotorFeedforwardMeters(1.5, 1.5)
 
         self.gyro.reset()
 
         # We need to invert one side of the drivetrain so that positive voltages
         # result in both sides moving forward. Depending on how your robot's
         # gearbox is constructed, you might have to invert the left side instead.
-        self.rearLeftMotor.setInverted(True)
+        self.rearRightMotor.setInverted(True)
+        self.frontRightMotor.setInverted(True)
+
+        AutoBuilder.configureHolonomic(
+            self.getPose,  # Robot pose supplier
+            self.resetPose,  # Method to reset odometry (will be called if your auto has a starting pose)
+            self.getRobotRelativeSpeeds,  # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            self.driveRobotRelative,  # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+            HolonomicPathFollowerConfig(  # HolonomicPathFollowerConfig, this should likely live in your Constants class
+                PIDConstants(kP, 0.0, 0.0),  # Translation PID constants
+                PIDConstants(kP, 0.0, 0.0),  # Rotation PID constants
+                self.kMaxSpeed,  # Max module speed, in m/s
+                self.kMaxAngularSpeed,  # Drive base radius in meters. Distance from robot center to furthest module.
+                ReplanningConfig()  # Default path replanning config. See the API for the options here
+            ),
+            self.shouldFlipPath,  # Supplier to control path flipping based on alliance color
+            self  # Reference to this subsystem to set requirements
+        )
 
     def getCurrentState(self) -> wpimath.kinematics.MecanumDriveWheelSpeeds:
         """Returns the current state of the drivetrain."""
@@ -96,6 +110,15 @@ class Drivetrain:
             self.rearLeftMotorEncoder.getRate(),
             self.rearRightMotorEncoder.getRate(),
         )
+
+    def getPose(self):
+        return self.odometry.getPose()
+
+    def resetPose(self, pose1, pose2, pose3):
+        self.odometry.resetPosition(pose1, pose2, pose3)
+
+    def getRobotRelativeSpeeds(self):
+        return self.getCurrentState()
 
     def getCurrentDistances(self) -> wpimath.kinematics.MecanumDriveWheelPositions:
         """Returns the current distances measured by the drivetrain."""
@@ -107,6 +130,15 @@ class Drivetrain:
         pos.rearRight = self.rearRightMotorEncoder.getDistance()
 
         return pos
+
+    def driveRobotRelative(self, speeds):
+        self.setSpeeds(speeds=speeds)
+
+    def shouldFlipPath(self):
+        # Boolean supplier that controls when the path will be mirrored for the red alliance
+        # This will flip the path being followed to the red side of the field.
+        # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+        return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def setSpeeds(self, speeds: wpimath.kinematics.MecanumDriveWheelSpeeds):
         """Sets the desired speeds for each wheel."""
