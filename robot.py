@@ -79,8 +79,9 @@ class MyRobot(wpilib.TimedRobot):
         # Locations of the wheels relative to the robot center.
         # 21.375in Wide
         # 20.5in Long
-        #
+        self.mecanum = Drivetrain()
         self.robotContainer = RobotContainer()
+        self.autoCommand = self.robotContainer.getAutonomousCommand()
         # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
         self.xspeedLimiter = wpimath.filter.SlewRateLimiter(3)
         self.yspeedLimiter = wpimath.filter.SlewRateLimiter(3)
@@ -202,10 +203,10 @@ class MyRobot(wpilib.TimedRobot):
         self.shooterHelperDValueSub = self.shooterHelperDValue.getTopic().subscribe(0)
         self.shooterHelperVValueSub = self.shooterHelperVValue.getTopic().subscribe(0.75)
         self.BatteryPercentageEstimationTopic = table.getDoubleTopic("BatteryPercentageEstimation").publish()  # Battery
-        self.frontLeftMotorEncoderNetworkTopic = table.getDoubleTopic("frontLeftMotorEncoder").publish()
-        self.rearLeftMotorEncoderNetworkTopic = table.getDoubleTopic("rearLeftMotorEncoder").publish()
-        self.frontRightMotorEncoderNetworkTopic = table.getDoubleTopic("frontRightMotorEncoder").publish()
-        self.rearRightMotorEncoderNetworkTopic = table.getDoubleTopic("rearRightMotorEncoder").publish()
+        # self.frontLeftMotorEncoderNetworkTopic = table.getDoubleTopic("frontLeftMotorEncoder").publish()
+        # self.rearLeftMotorEncoderNetworkTopic = table.getDoubleTopic("rearLeftMotorEncoder").publish()
+        # self.frontRightMotorEncoderNetworkTopic = table.getDoubleTopic("frontRightMotorEncoder").publish()
+        # self.rearRightMotorEncoderNetworkTopic = table.getDoubleTopic("rearRightMotorEncoder").publish()
         self.PidgeonCompass.set(self.pidgen.getCompassHeading())
         self.GryoConnected.set(False)
 
@@ -281,9 +282,7 @@ class MyRobot(wpilib.TimedRobot):
         self.gyro.reset()
 
     def autonomousInit(self):
-        self.autoCommand = self.robotContainer.getAutonomousCommand()
-        if autoCommand is not None:
-            autoCommand.schedule()
+        self.autoCommand.schedule()
 
     def autonomousPeriodic(self):
         # Note: Look here
@@ -533,7 +532,6 @@ class MyRobot(wpilib.TimedRobot):
             self.autoCommand.cancel()
 
     def disabledPeriodic(self):
-        self.autoCommand = self.robotContainer.getAutonomousCommand()
         # PID Variable Declaration
         self.armPID = PIDController(
             self.armPVarSub.get(),

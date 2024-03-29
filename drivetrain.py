@@ -3,7 +3,7 @@
 # Open Source Software; you can modify and/or share it under the terms of
 # the WPILib BSD license file in the root directory of this project.
 #
-
+import pathplannerlib.logging
 import wpilib.drive
 import navx
 import wpimath.controller
@@ -90,7 +90,7 @@ class Drivetrain:
         AutoBuilder.configureHolonomic(
             self.getPose,  # Robot pose supplier
             self.resetPose,  # Method to reset odometry (will be called if your auto has a starting pose)
-            self.getRobotRelativeSpeeds,  # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            self.getCurrentSpeeds,  # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
             self.driveRobotRelative,  # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
             HolonomicPathFollowerConfig(  # HolonomicPathFollowerConfig, this should likely live in your Constants class
                 PIDConstants(kP, 0.0, 0.0),  # Translation PID constants
@@ -102,6 +102,9 @@ class Drivetrain:
             self.shouldFlipPath,  # Supplier to control path flipping based on alliance color
             self  # Reference to this subsystem to set requirements
         )
+
+        # pathplannerlib.logging.PathPlannerLogging.setLogActivePathCallback()
+        wpilib.SmartDashboard.putData("Field", self.field)
 
     def getCurrentState(self) -> wpimath.kinematics.MecanumDriveWheelSpeeds:
         """Returns the current state of the drivetrain."""
@@ -116,11 +119,10 @@ class Drivetrain:
         return self.odometry.getPose()
 
     def resetPose(self, pose):
-        # TODO: https://github.com/mjansen4857/pathplanner/blob/d0e12f59430b869bde70180cb709e175b762fc67/examples/java/src/main/java/frc/robot/subsystems/SwerveSubsystem.java#L92
-        self.odometry.resetPosition(self.gyro.getRotation2d(), ?self.getPositions(), pose)
+        self.odometry.resetPosition(self.gyro.getRotation2d(), self.getCurrentDistances(), pose)
 
-    def getRobotRelativeSpeeds(self):
-        return self.getCurrentState()
+    def getCurrentSpeeds(self):
+        return self.kinematics.toChassisSpeeds(self.getCurrentState())
 
     def getCurrentDistances(self) -> wpimath.kinematics.MecanumDriveWheelPositions:
         """Returns the current distances measured by the drivetrain."""
@@ -137,9 +139,6 @@ class Drivetrain:
         self.setSpeeds(speeds=speeds)
 
     def shouldFlipPath(self):
-        # Boolean supplier that controls when the path will be mirrored for the red alliance
-        # This will flip the path being followed to the red side of the field.
-        # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 
     def setSpeeds(self, speeds: wpimath.kinematics.MecanumDriveWheelSpeeds):
@@ -166,6 +165,9 @@ class Drivetrain:
         self.frontRightMotor.setVoltage(frontRightOutput + frontRightFeedforward)
         self.rearLeftMotor.setVoltage(rearLeftOutput + rearLeftFeedforward)
         self.rearRightMotor.setVoltage(rearRightOutput + rearRightFeedforward)
+
+    def periodic(self):
+        pass
 
     def drive(
         self,
