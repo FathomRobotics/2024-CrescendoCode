@@ -292,6 +292,7 @@ class MyRobot(wpilib.TimedRobot):
         self.autoArmDownStart = False
         self.teleautoArmUp = False
         self.teleautoWristOut = False
+        self.inStartingPosition = True  # Assume starting in starting position
 
         # Actuator Mode
         self.actuatorMode = ActuatorSystemModeManager()
@@ -308,6 +309,11 @@ class MyRobot(wpilib.TimedRobot):
     def resetGryoThread(self):
         time.sleep(1)
         self.gyro.reset()
+
+    def autonomousInit(self):
+        if self.inStartingPosition:
+            self.armBuiltinEncoder.setPosition(198)
+            self.inStartingPosition = False
 
     def autonomousPeriodic(self):
         # Note: Look here
@@ -364,7 +370,9 @@ class MyRobot(wpilib.TimedRobot):
         self.frontRightMotorEncoder.reset()
         self.rearRightMotorEncoder.reset()
         # TODO: Make sure that this encoder is not reset in a match (IF FMS ATTACHED)
-        self.armBuiltinEncoder.setPosition(198)
+        if self.inStartingPosition:
+            self.armBuiltinEncoder.setPosition(198)
+            self.inStartingPosition = False
         self.wristEncoder.reset()
 
         self.actuatorMode.setIdle()  # Set the Actuator mode to Idle
