@@ -38,17 +38,17 @@ class Drivetrain:
         time.sleep(1)
         self.gyro.reset()
 
-    def __init__(self):
+    def __init__(self,frontLeftMotorEncoder, rearLeftMotorEncoder, frontRightMotorEncoder, rearRightMotorEncoder):
         self.field = wpilib.Field2d()
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
         self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
         self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
         self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
 
-        self.frontLeftMotorEncoder = wpilib.Encoder(0, 1)
-        self.rearLeftMotorEncoder = wpilib.Encoder(2, 3)
-        self.frontRightMotorEncoder = wpilib.Encoder(4, 5)
-        self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
+        self.frontLeftMotorEncoder = frontLeftMotorEncoder
+        self.rearLeftMotorEncoder = rearLeftMotorEncoder
+        self.frontRightMotorEncoder = frontRightMotorEncoder
+        self.rearRightMotorEncoder = rearRightMotorEncoder
 
         frontLeftLocation = Translation2d(0.2713, 0.2715)
         frontRightLocation = Translation2d(0.2713, -0.2715)
