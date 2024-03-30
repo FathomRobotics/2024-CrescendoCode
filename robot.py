@@ -313,6 +313,7 @@ class MyRobot(wpilib.TimedRobot):
     def autonomousInit(self):
         if self.inStartingPosition:
             self.armBuiltinEncoder.setPosition(198)
+            self.wristEncoder.reset()
             self.inStartingPosition = False
 
     def autonomousPeriodic(self):
@@ -373,7 +374,7 @@ class MyRobot(wpilib.TimedRobot):
         if self.inStartingPosition:
             self.armBuiltinEncoder.setPosition(198)
             self.inStartingPosition = False
-        self.wristEncoder.reset()
+            self.wristEncoder.reset()
 
         self.actuatorMode.setIdle()  # Set the Actuator mode to Idle
 
