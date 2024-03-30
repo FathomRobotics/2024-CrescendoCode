@@ -34,7 +34,7 @@ class Drivetrain:
     """Represents a differential drive style drivetrain."""
 
     class stopRobot(commands2.InstantCommand):
-        def __init__(self, *requirements: Subsystem):
+        def __init__(self, *requirements: Subsystem, motors):
             super().__init__(*requirements)
 
     kMaxSpeed = 3.0  # 3 meters per second
