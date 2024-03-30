@@ -300,7 +300,7 @@ class MyRobot(wpilib.TimedRobot):
         if self.inStartingPosition:
             self.armBuiltinEncoder.setPosition(198)
             self.wristEncoder.reset()
-            self.inStartingPosition = False'
+            self.inStartingPosition = False
         auto = pathplannerlib.auto.AutoBuilder.buildAuto("SamAuto")
         auto.schedule()
 
