@@ -1,6 +1,12 @@
 {
   "version": 1.0,
-  "startingPose": null,
+  "startingPose": {
+    "position": {
+      "x": 0.66,
+      "y": 6.9
+    },
+    "rotation": 57.22
+  },
   "command": {
     "type": "sequential",
     "data": {
@@ -8,13 +14,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "CenterToNote"
+            "pathName": "RightToNote"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "CenterNoteToCenter"
+            "pathName": "RightNoteToRight"
           }
         }
       ]

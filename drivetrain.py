@@ -3,7 +3,9 @@
 # Open Source Software; you can modify and/or share it under the terms of
 # the WPILib BSD license file in the root directory of this project.
 #
+import commands2
 import pathplannerlib.logging
+import pathplannerlib.path
 import wpilib.drive
 import navx
 import wpimath.controller
@@ -32,13 +34,14 @@ class Drivetrain:
     """Represents a differential drive style drivetrain."""
 
     kMaxSpeed = 3.0  # 3 meters per second
-    kMaxAngularSpeed = math.pi*2  # 1/2 rotation per second
+    kMaxAngularSpeed = math.pi*3  # 1/2 rotation per second
 
     def resetGryoThread(self):
         time.sleep(1)
         self.gyro.reset()
 
     def __init__(self,frontLeftMotorEncoder, rearLeftMotorEncoder, frontRightMotorEncoder, rearRightMotorEncoder):
+        self.pathInit = pathplannerlib.path.PathPlannerPath.fromPathFile('Simple1')
         self.field = wpilib.Field2d()
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
         self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
@@ -56,13 +59,14 @@ class Drivetrain:
         rearRightLocation = Translation2d(-0.2713, -0.2715)
 
         # kP = 0.005 and kI 0.0001 Bad
-        kP = 0.0001
-        kI = 0
-        kD = 0
-        self.frontLeftPIDController = wpimath.controller.PIDController(kP, kI, kD)
-        self.frontRightPIDController = wpimath.controller.PIDController(kP, kI, kD)
-        self.rearLeftPIDController = wpimath.controller.PIDController(kP, kI, kD)
-        self.rearRightPIDController = wpimath.controller.PIDController(kP, kI, kD)
+        self.kP = 2
+        self.kI = 0
+        self.kD = 0
+        self.feedforwardValue = 0
+        self.frontLeftPIDController = wpimath.controller.PIDController(self.kP, self.kI, self.kD)
+        self.frontRightPIDController = wpimath.controller.PIDController(self.kP, self.kI, self.kD)
+        self.rearLeftPIDController = wpimath.controller.PIDController(self.kP, self.kI, self.kD)
+        self.rearRightPIDController = wpimath.controller.PIDController(self.kP, self.kI, self.kD)
 
         self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
         gyroThread = threading.Thread(target=self.resetGryoThread)
@@ -77,15 +81,17 @@ class Drivetrain:
         )
 
         # Gains are for example purposes only - must be determined for your own robot!
-        self.feedforward = wpimath.controller.SimpleMotorFeedforwardMeters(1.5, 1.5)
+        self.feedforward = wpimath.controller.SimpleMotorFeedforwardMeters(self.feedforwardValue, self.feedforwardValue)
 
         self.gyro.reset()
 
         # We need to invert one side of the drivetrain so that positive voltages
         # result in both sides moving forward. Depending on how your robot's
         # gearbox is constructed, you might have to invert the left side instead.
-        self.rearRightMotor.setInverted(True)
-        self.frontRightMotor.setInverted(True)
+        self.rearLeftMotor.setInverted(True)
+        self.frontLeftMotor.setInverted(True)
+        self.rearRightMotor.setInverted(False)
+        self.frontRightMotor.setInverted(False)
 
         AutoBuilder.configureHolonomic(
             self.getPose,  # Robot pose supplier
@@ -93,18 +99,32 @@ class Drivetrain:
             self.getCurrentSpeeds,  # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
             self.driveRobotRelative,  # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
             HolonomicPathFollowerConfig(  # HolonomicPathFollowerConfig, this should likely live in your Constants class
-                PIDConstants(5, 0.0, 0.0),  # Translation PID constants
-                PIDConstants(5, 0.0, 0.0),  # Rotation PID constants
-                3,  # Max module speed, in m/s
-                0.4,  # Drive base radius in meters. Distance from robot center to furthest module.
+                PIDConstants(self.kP, 0.0, 0.0),  # Translation PID constants
+                PIDConstants(1, 0.0, 0.0),  # Rotation PID constants
+                self.kMaxSpeed,  # Max module speed, in m/s
+                self.kMaxAngularSpeed,  # Drive base radius in meters. Distance from robot center to furthest module.
                 ReplanningConfig()  # Default path replanning config. See the API for the options here
             ),
             self.shouldFlipPath,  # Supplier to control path flipping based on alliance color
             self  # Reference to this subsystem to set requirements
         )
 
-        # pathplannerlib.logging.PathPlannerLogging.setLogActivePathCallback()
-        wpilib.SmartDashboard.putData("Field", self.field)
+    def followSam(self):
+        return pathplannerlib.auto.FollowPathHolonomic(
+            self.pathInit,
+            self.getPose,
+            self.getCurrentSpeeds,
+            self.driveRobotRelative,
+            HolonomicPathFollowerConfig(  # HolonomicPathFollowerConfig, this should likely live in your Constants class
+                PIDConstants(1.2, 0.0, 0.0),  # Translation PID constants
+                PIDConstants(0.7, 0.0, 0.0),  # Rotation PID constants
+                2,  # Max module speed, in m/s
+                0.381,  # Drive base radius in meters. Distance from robot center to furthest module.
+                ReplanningConfig()  # Default path replanning config. See the API for the options here
+            ),
+            self.shouldFlipPath,  # Supplier to control path flipping based on alliance color
+            self
+        ).andThen(self.stopRobot())
 
     def getCurrentState(self) -> wpimath.kinematics.MecanumDriveWheelSpeeds:
         """Returns the current state of the drivetrain."""
@@ -117,6 +137,10 @@ class Drivetrain:
 
     def getPose(self):
         return self.odometry.getPose()
+
+    def stopRobot(self):
+        self.drive(0, 0, 0, False, 1)
+        return commands2.Command()
 
     def resetPose(self, pose):
         self.odometry.resetPosition(self.gyro.getRotation2d(), self.getCurrentDistances(), pose)
@@ -136,7 +160,7 @@ class Drivetrain:
         return pos
 
     def driveRobotRelative(self, speeds):
-        self.setSpeeds(speeds=speeds)
+        self.setSpeeds(self.kinematics.toWheelSpeeds(speeds))
 
     def shouldFlipPath(self):
         return DriverStation.getAlliance() == DriverStation.Alliance.kRed

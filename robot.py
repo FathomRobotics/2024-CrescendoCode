@@ -8,6 +8,7 @@ import math
 import threading
 import time
 
+import commands2
 import navx
 import ntcore
 import phoenix5
@@ -24,6 +25,8 @@ from wpimath.kinematics import MecanumDriveOdometry
 from wpimath.geometry import Pose2d
 from wpimath.geometry import Rotation2d
 from wpimath.controller import PIDController
+import pathplannerlib
+import pathplannerlib.path
 import wpimath.filter
 
 from drivetrain import Drivetrain
@@ -68,7 +71,7 @@ class ActuatorSystemModeManager:
             self.Mode = self.Idle
 
 
-class MyRobot(wpilib.TimedRobot):
+class MyRobot(commands2.TimedCommandRobot):
     """
     This is a demo program showing how to use Mecanum control with the
     MecanumDrive class.
@@ -80,12 +83,24 @@ class MyRobot(wpilib.TimedRobot):
         # Locations of the wheels relative to the robot center.
         # 21.375in Wide
         # 20.5in Long
-
+        wpilib.SmartDashboard.init()
+        self.field2d = wpilib.Field2d()
         # Drive Encoders
-        self.frontLeftMotorEncoder = wpilib.Encoder(0, 1)
-        self.rearLeftMotorEncoder = wpilib.Encoder(2, 3)
-        self.frontRightMotorEncoder = wpilib.Encoder(4, 5)
-        self.rearRightMotorEncoder = wpilib.Encoder(6, 7)
+        # (360/2048) degrees per pulse
+        # 6in wheel
+        # 0.1524pi/2048
+        a = 2
+        b = 4.36
+        distancePerPulse = (a/b)/2048
+        # Wheels have a radius
+        self.frontLeftMotorEncoder = wpilib.Encoder(0, 1, False)
+        self.frontLeftMotorEncoder.setDistancePerPulse(distancePerPulse)
+        self.rearLeftMotorEncoder = wpilib.Encoder(2, 3, False)
+        self.rearLeftMotorEncoder.setDistancePerPulse(distancePerPulse)
+        self.frontRightMotorEncoder = wpilib.Encoder(4, 5, True)
+        self.frontRightMotorEncoder.setDistancePerPulse(distancePerPulse)
+        self.rearRightMotorEncoder = wpilib.Encoder(6, 7, True)
+        self.rearRightMotorEncoder.setDistancePerPulse(distancePerPulse)
 
         self.mecanum = Drivetrain(
             self.frontLeftMotorEncoder,
@@ -94,7 +109,10 @@ class MyRobot(wpilib.TimedRobot):
             self.rearRightMotorEncoder
         )
 
+        self.samPath = self.mecanum.followSam()
+
         self.robotContainer = RobotContainer(self.mecanum)
+        self.mecanum.resetPose(wpimath.geometry.Pose2d(0.66, 6.9, 0.998677))
         self.autoCommand = self.robotContainer.getAutonomousCommand()
         # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
         self.xspeedLimiter = wpimath.filter.SlewRateLimiter(3)
@@ -198,6 +216,8 @@ class MyRobot(wpilib.TimedRobot):
         self.shooterHelperDValue = table.getDoubleTopic("ShooterDValue").publish()
         self.shooterHelperDValue.set(0)
 
+        self.fieldposeNet = table.getStringTopic("self.mecanum.getPose()").publish()
+
         self.wristP = table.getDoubleTopic("WristP").publish()
         self.wristP.set(0.025)
         self.wristI = table.getDoubleTopic("WristI").publish()
@@ -223,6 +243,20 @@ class MyRobot(wpilib.TimedRobot):
         self.rearRightMotorEncoderNetworkTopic = table.getDoubleTopic("rearRightMotorEncoder").publish()
         self.PidgeonCompass.set(self.pidgen.getCompassHeading())
         self.GryoConnected.set(False)
+
+        # Drive PID
+        self.drivePPub = table.getDoubleTopic("DriveP").publish()
+        self.drivePPub.set(self.mecanum.kP)
+        self.driveIPub = table.getDoubleTopic("DriveI").publish()
+        self.driveIPub.set(self.mecanum.kI)
+        self.driveDPub = table.getDoubleTopic("DriveD").publish()
+        self.driveDPub.set(self.mecanum.kD)
+        self.drivePSub = table.getDoubleTopic("DriveP").subscribe(0)
+        self.driveISub = table.getDoubleTopic("DriveI").subscribe(0)
+        self.driveDSub = table.getDoubleTopic("DriveD").subscribe(0)
+        self.driveFeedforwardPub = table.getDoubleTopic("DriveFeedforward").publish()
+        self.driveFeedforwardPub.set(self.mecanum.feedforwardValue)
+        self.driveFeedforwardSub = table.getDoubleTopic("DriveFeedforward").subscribe(0)
 
         # Define the Controller
         self.driver1 = wpilib.XboxController(0)
@@ -290,7 +324,32 @@ class MyRobot(wpilib.TimedRobot):
         # if self.powerDistribution.getTotalCurrent() < self.maxCurrentDrawWhenCheckingPercentage:
         # self.BatteryPercentageEstimationTopic.set((self.powerDistribution.getVoltage() - self.minVoltage) /
         # self._maxmandiffVoltage)
+        self.mecanum.feedforward = wpimath.controller.SimpleMotorFeedforwardMeters(self.driveFeedforwardSub.get(),
+                                                                                   self.driveFeedforwardSub.get())
+        # Front Left Controller
+        self.mecanum.frontLeftPIDController.setP(self.drivePSub.get())
+        self.mecanum.frontLeftPIDController.setI(self.driveISub.get())
+        self.mecanum.frontLeftPIDController.setD(self.driveDSub.get())
+        # Front Right Controller
+        self.mecanum.frontRightPIDController.setP(self.drivePSub.get())
+        self.mecanum.frontRightPIDController.setI(self.driveISub.get())
+        self.mecanum.frontRightPIDController.setD(self.driveDSub.get())
+        # Rear Left Controller
+        self.mecanum.rearLeftPIDController.setP(self.drivePSub.get())
+        self.mecanum.rearLeftPIDController.setI(self.driveISub.get())
+        self.mecanum.rearLeftPIDController.setD(self.driveDSub.get())
+        # Rear Right Controller
+        self.mecanum.rearRightPIDController.setP(self.drivePSub.get())
+        self.mecanum.rearRightPIDController.setI(self.driveISub.get())
+        self.mecanum.rearRightPIDController.setD(self.driveDSub.get())
+
         self.mecanum.updateOdometry()
+        self.frontLeftMotorEncoderNetworkTopic.set(self.frontLeftMotorEncoder.getDistance())
+        self.rearLeftMotorEncoderNetworkTopic.set(self.rearLeftMotorEncoder.getDistance())
+        self.frontRightMotorEncoderNetworkTopic.set(self.frontRightMotorEncoder.getDistance())
+        self.rearRightMotorEncoderNetworkTopic.set(self.rearRightMotorEncoder.getDistance())
+        self.field2d.setRobotPose(self.mecanum.getPose())
+        wpilib.SmartDashboard.putData("Field", self.field2d)
 
     def resetGryoThread(self):
         time.sleep(1)
@@ -301,8 +360,8 @@ class MyRobot(wpilib.TimedRobot):
             self.armBuiltinEncoder.setPosition(198)
             self.wristEncoder.reset()
             self.inStartingPosition = False
-        auto = pathplannerlib.auto.AutoBuilder.buildAuto("SamAuto")
-        auto.schedule()
+        self.mecanum.breakMotors()
+        self.autoCommand.schedule()
 
     def autonomousPeriodic(self):
         # Note: Look here
@@ -548,6 +607,7 @@ class MyRobot(wpilib.TimedRobot):
         # self.shooterHelper.set(-self.driver1.getLeftTriggerAxis())
 
     def disabledInit(self):
+
         # self.arm.setIdleMode(self.arm.IdleMode.kCoast)
         self.compressor.disable()
         if self.autoCommand is not None:
