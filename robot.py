@@ -16,6 +16,7 @@ import rev
 import wpilib
 import wpilib.drive
 import wpimath
+import pathplannerlib
 from wpimath.geometry import Translation2d
 from wpimath.kinematics import MecanumDriveKinematics
 from wpimath.kinematics import MecanumDriveWheelPositions
@@ -295,7 +296,8 @@ class MyRobot(wpilib.TimedRobot):
         self.gyro.reset()
 
     def autonomousInit(self):
-        self.autoCommand.schedule()
+        auto = pathplannerlib.auto.AutoBuilder.buildAuto("SamAuto")
+        auto.schedule()
 
     def autonomousPeriodic(self):
         # Note: Look here

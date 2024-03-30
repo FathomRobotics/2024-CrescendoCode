@@ -93,10 +93,10 @@ class Drivetrain:
             self.getCurrentSpeeds,  # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
             self.driveRobotRelative,  # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
             HolonomicPathFollowerConfig(  # HolonomicPathFollowerConfig, this should likely live in your Constants class
-                PIDConstants(kP, 0.0, 0.0),  # Translation PID constants
-                PIDConstants(kP, 0.0, 0.0),  # Rotation PID constants
-                self.kMaxSpeed,  # Max module speed, in m/s
-                self.kMaxAngularSpeed,  # Drive base radius in meters. Distance from robot center to furthest module.
+                PIDConstants(5, 0.0, 0.0),  # Translation PID constants
+                PIDConstants(5, 0.0, 0.0),  # Rotation PID constants
+                3,  # Max module speed, in m/s
+                0.4,  # Drive base radius in meters. Distance from robot center to furthest module.
                 ReplanningConfig()  # Default path replanning config. See the API for the options here
             ),
             self.shouldFlipPath,  # Supplier to control path flipping based on alliance color
