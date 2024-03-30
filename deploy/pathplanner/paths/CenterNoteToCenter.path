@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 3.843437994568298,
-        "y": 5.515804013063089
+        "x": 2.3106230827846286,
+        "y": 5.505754088431254
       },
       "isLocked": false,
       "linkedName": "CenterNote"
@@ -20,8 +20,8 @@
         "y": 5.515804013063089
       },
       "prevControl": {
-        "x": 0.25546544958995643,
-        "y": 5.515804013063089
+        "x": 2.024481741271176,
+        "y": 5.515621031242063
       },
       "nextControl": null,
       "isLocked": false,
@@ -32,8 +32,8 @@
   "constraintZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 3.0,
-    "maxAcceleration": 3.0,
+    "maxVelocity": 2.0,
+    "maxAcceleration": 2.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0
   },

@@ -33,6 +33,10 @@ import math
 class Drivetrain:
     """Represents a differential drive style drivetrain."""
 
+    class stopRobot(commands2.InstantCommand):
+        def __init__(self, *requirements: Subsystem):
+            super().__init__(*requirements)
+
     kMaxSpeed = 3.0  # 3 meters per second
     kMaxAngularSpeed = math.pi*3  # 1/2 rotation per second
 
@@ -59,7 +63,7 @@ class Drivetrain:
         rearRightLocation = Translation2d(-0.2713, -0.2715)
 
         # kP = 0.005 and kI 0.0001 Bad
-        self.kP = 2
+        self.kP = 3
         self.kI = 0
         self.kD = 0
         self.feedforwardValue = 0
@@ -139,7 +143,8 @@ class Drivetrain:
         return self.odometry.getPose()
 
     def stopRobot(self):
-        self.drive(0, 0, 0, False, 1)
+        wpilib.reportWarning("Stop Robot", False)
+        self.drive(0, 0, 0, False, 0)
         return commands2.Command()
 
     def resetPose(self, pose):

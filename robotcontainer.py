@@ -1,3 +1,4 @@
+import commands2
 from pathplannerlib.auto import PathPlannerAuto, NamedCommands, AutoBuilder
 import pathplannerlib.auto
 from wpilib import SmartDashboard
@@ -8,7 +9,8 @@ class RobotContainer:
     def __init__(self, mecanumSubsystem):
         self.mechanumSubsystem = mecanumSubsystem
         self.configureBindings()
-        self.autoChooser = pathplannerlib.auto.AutoBuilder.buildAuto("Simple")
+        NamedCommands.registerCommand("stop", self.mechanumSubsystem.stopRobot())
+        self.autoChooser = pathplannerlib.auto.AutoBuilder.buildAuto("SamAuto")
         SmartDashboard.putData("Auto Mode", self.autoChooser)
 
     def configureBindings(self):

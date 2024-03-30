@@ -16,6 +16,12 @@
           "data": {
             "pathName": "CenterNoteToCenter"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "stop"
+          }
         }
       ]
     }

@@ -83,6 +83,7 @@ class MyRobot(commands2.TimedCommandRobot):
         # Locations of the wheels relative to the robot center.
         # 21.375in Wide
         # 20.5in Long
+        wpilib.reportWarning("STARTING!!!", False)
         wpilib.SmartDashboard.init()
         self.field2d = wpilib.Field2d()
         # Drive Encoders
@@ -112,7 +113,7 @@ class MyRobot(commands2.TimedCommandRobot):
         self.samPath = self.mecanum.followSam()
 
         self.robotContainer = RobotContainer(self.mecanum)
-        self.mecanum.resetPose(wpimath.geometry.Pose2d(0.66, 6.9, 0.998677))
+        self.mecanum.resetPose(wpimath.geometry.Pose2d(1.26, 5.52, 0))
         self.autoCommand = self.robotContainer.getAutonomousCommand()
         # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
         self.xspeedLimiter = wpimath.filter.SlewRateLimiter(3)
@@ -258,6 +259,8 @@ class MyRobot(commands2.TimedCommandRobot):
         self.driveFeedforwardPub.set(self.mecanum.feedforwardValue)
         self.driveFeedforwardSub = table.getDoubleTopic("DriveFeedforward").subscribe(0)
 
+        self.chassisSpeedsPublisher = table.getStringTopic("ChassisSpeed").publish()
+
         # Define the Controller
         self.driver1 = wpilib.XboxController(0)
         self.driver2 = wpilib.XboxController(1)
@@ -311,6 +314,7 @@ class MyRobot(commands2.TimedCommandRobot):
         self.armDownLimitSwitchNetwork.set(self.armDownLimitSwitch.get())
         self.armUpLimitSwitchNetwork.set(self.armUpLimitSwitch.get())
         self.wristEncoderNetwork.set(self.wristEncoder.get())
+        self.chassisSpeedsPublisher.set(str(self.mecanum.getCurrentSpeeds()))
         # Get my wheel positions
         # wheelPositions = wpimath.kinematics.MecanumDriveWheelPositions(
         #     self.frontLeftMotorEncoder.getDistance(), self.frontRightMotorEncoder.getDistance(),
