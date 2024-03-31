@@ -3,9 +3,7 @@ import commands2
 
 
 # Note: Look here
-# https://github.com/robotpy/examples/blob/main/GyroDriveCommands/commands/turntoangle.py
-# https://docs.wpilib.org/en/stable/docs/software/pathplanning/trajectory-tutorial/characterizing-drive.html
-# https://docs.wpilib.org/en/stable/docs/software/advanced-controls/index.html
+# https://github.com/Lambda-Corps/2024_Crescendo/blob/main/intake.py
 
 # Get the rotation of the robot from the gyro.
 # Put Wrist Into Shooting Position
