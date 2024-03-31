@@ -34,13 +34,13 @@ class Drivetrain:
     """Represents a differential drive style drivetrain."""
 
     kMaxSpeed = 3.0  # 3 meters per second
-    kMaxAngularSpeed = math.pi*3  # 1/2 rotation per second
+    kMaxAngularSpeed = math.pi * 3  # 1/2 rotation per second
 
     def resetGryoThread(self):
         time.sleep(1)
         self.gyro.reset()
 
-    def __init__(self,frontLeftMotorEncoder, rearLeftMotorEncoder, frontRightMotorEncoder, rearRightMotorEncoder):
+    def __init__(self, frontLeftMotorEncoder, rearLeftMotorEncoder, frontRightMotorEncoder, rearRightMotorEncoder):
         self.pathInit = pathplannerlib.path.PathPlannerPath.fromPathFile('Simple1')
         self.field = wpilib.Field2d()
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
@@ -124,7 +124,7 @@ class Drivetrain:
             ),
             self.shouldFlipPath,  # Supplier to control path flipping based on alliance color
             self
-        ).andThen(self.stopRobot())
+        ).andThen()
 
     def getCurrentState(self) -> wpimath.kinematics.MecanumDriveWheelSpeeds:
         """Returns the current state of the drivetrain."""
@@ -139,9 +139,10 @@ class Drivetrain:
         return self.odometry.getPose()
 
     def stopRobot(self):
-        wpilib.reportWarning("Stop Robot", False)
-        self.drive(0, 0, 0, False, 0)
-        return commands2.Command()
+        self.frontLeftPIDController.setPID(0, 0, 0)
+        self.frontRightPIDController.setPID(0, 0, 0)
+        self.rearLeftPIDController.setPID(0, 0, 0)
+        self.rearRightPIDController.setPID(0, 0, 0)
 
     def resetPose(self, pose):
         self.odometry.resetPosition(self.gyro.getRotation2d(), self.getCurrentDistances(), pose)
@@ -195,12 +196,12 @@ class Drivetrain:
         pass
 
     def drive(
-        self,
-        xSpeed: float,
-        ySpeed: float,
-        rot: float,
-        fieldRelative: bool,
-        periodSeconds: float,
+            self,
+            xSpeed: float,
+            ySpeed: float,
+            rot: float,
+            fieldRelative: bool,
+            periodSeconds: float,
     ):
         """Method to drive the robot using joystick info."""
         mecanumDriveWheelSpeeds = self.kinematics.toWheelSpeeds(

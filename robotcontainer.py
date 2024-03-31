@@ -9,7 +9,7 @@ class RobotContainer:
     def __init__(self, mecanumSubsystem):
         self.mechanumSubsystem = mecanumSubsystem
         self.configureBindings()
-        NamedCommands.registerCommand("stop", self.mechanumSubsystem.stopRobot())
+        NamedCommands.registerCommand("stop", StopRobotAuto(self.mechanumSubsystem))
         self.autoChooser = pathplannerlib.auto.AutoBuilder.buildAuto("SamAuto")
         SmartDashboard.putData("Auto Mode", self.autoChooser)
 
@@ -18,3 +18,16 @@ class RobotContainer:
 
     def getAutonomousCommand(self):
         return self.autoChooser
+
+
+class StopRobotAuto(commands2.InstantCommand):
+    def __init__(self, base):
+        super().__init__()
+        self._sub = base
+        self.addRequirements(self._sub)
+
+    def initialize(self):
+        pass
+
+    def execute(self):
+        self._sub.stopRobot()

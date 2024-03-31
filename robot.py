@@ -114,7 +114,6 @@ class MyRobot(commands2.TimedCommandRobot):
 
         self.robotContainer = RobotContainer(self.mecanum)
         self.mecanum.resetPose(wpimath.geometry.Pose2d(1.26, 5.52, 0))
-        self.autoCommand = self.robotContainer.getAutonomousCommand()
         # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
         self.xspeedLimiter = wpimath.filter.SlewRateLimiter(3)
         self.yspeedLimiter = wpimath.filter.SlewRateLimiter(3)
@@ -139,10 +138,6 @@ class MyRobot(commands2.TimedCommandRobot):
         self.powerDistribution = wpilib.PowerDistribution()
 
         # Control Devices
-        # self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
-        # self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
-        # self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
-        # self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
         self.pidgen = phoenix5.sensors.Pigeon2(5)
         self.intake = rev.CANSparkMax(7, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.arm = rev.CANSparkMax(8, type=rev.CANSparkLowLevel.MotorType.kBrushless)
@@ -305,6 +300,7 @@ class MyRobot(commands2.TimedCommandRobot):
         self.teleautoArmUp = False
         self.teleautoWristOut = False
         self.inStartingPosition = True  # Assume starting in starting position
+        self.isTuningDrivePID = False
 
         # Actuator Mode
         self.actuatorMode = ActuatorSystemModeManager()
@@ -315,37 +311,27 @@ class MyRobot(commands2.TimedCommandRobot):
         self.armUpLimitSwitchNetwork.set(self.armUpLimitSwitch.get())
         self.wristEncoderNetwork.set(self.wristEncoder.get())
         self.chassisSpeedsPublisher.set(str(self.mecanum.getCurrentSpeeds()))
-        # Get my wheel positions
-        # wheelPositions = wpimath.kinematics.MecanumDriveWheelPositions(
-        #     self.frontLeftMotorEncoder.getDistance(), self.frontRightMotorEncoder.getDistance(),
-        #     self.rearLeftMotorEncoder.getDistance(), self.rearRightMotorEncoder.getDistance()
-        # )
-        #
-        # # Get the rotation of the robot from the gyro.
-        # gyroAngle = self.gyro.getRotation2d()
-        #
-        # # Update the pose self.pose = odometry.update(gyroAngle, wheelPositions) self.fieldPose.set(str(self.pose))
-        # if self.powerDistribution.getTotalCurrent() < self.maxCurrentDrawWhenCheckingPercentage:
-        # self.BatteryPercentageEstimationTopic.set((self.powerDistribution.getVoltage() - self.minVoltage) /
-        # self._maxmandiffVoltage)
-        self.mecanum.feedforward = wpimath.controller.SimpleMotorFeedforwardMeters(self.driveFeedforwardSub.get(),
-                                                                                   self.driveFeedforwardSub.get())
-        # Front Left Controller
-        self.mecanum.frontLeftPIDController.setP(self.drivePSub.get())
-        self.mecanum.frontLeftPIDController.setI(self.driveISub.get())
-        self.mecanum.frontLeftPIDController.setD(self.driveDSub.get())
-        # Front Right Controller
-        self.mecanum.frontRightPIDController.setP(self.drivePSub.get())
-        self.mecanum.frontRightPIDController.setI(self.driveISub.get())
-        self.mecanum.frontRightPIDController.setD(self.driveDSub.get())
-        # Rear Left Controller
-        self.mecanum.rearLeftPIDController.setP(self.drivePSub.get())
-        self.mecanum.rearLeftPIDController.setI(self.driveISub.get())
-        self.mecanum.rearLeftPIDController.setD(self.driveDSub.get())
-        # Rear Right Controller
-        self.mecanum.rearRightPIDController.setP(self.drivePSub.get())
-        self.mecanum.rearRightPIDController.setI(self.driveISub.get())
-        self.mecanum.rearRightPIDController.setD(self.driveDSub.get())
+        self.drivePPub.set(self.mecanum.frontLeftPIDController.getP())
+        if self.isTuningDrivePID:
+            wpilib.reportWarning("---------- TUNING DRIVE PID ------------")
+            self.mecanum.feedforward = wpimath.controller.SimpleMotorFeedforwardMeters(self.driveFeedforwardSub.get(),
+                                                                                       self.driveFeedforwardSub.get())
+            # Front Left Controller
+            self.mecanum.frontLeftPIDController.setP(self.drivePSub.get())
+            self.mecanum.frontLeftPIDController.setI(self.driveISub.get())
+            self.mecanum.frontLeftPIDController.setD(self.driveDSub.get())
+            # Front Right Controller
+            self.mecanum.frontRightPIDController.setP(self.drivePSub.get())
+            self.mecanum.frontRightPIDController.setI(self.driveISub.get())
+            self.mecanum.frontRightPIDController.setD(self.driveDSub.get())
+            # Rear Left Controller
+            self.mecanum.rearLeftPIDController.setP(self.drivePSub.get())
+            self.mecanum.rearLeftPIDController.setI(self.driveISub.get())
+            self.mecanum.rearLeftPIDController.setD(self.driveDSub.get())
+            # Rear Right Controller
+            self.mecanum.rearRightPIDController.setP(self.drivePSub.get())
+            self.mecanum.rearRightPIDController.setI(self.driveISub.get())
+            self.mecanum.rearRightPIDController.setD(self.driveDSub.get())
 
         self.mecanum.updateOdometry()
         self.frontLeftMotorEncoderNetworkTopic.set(self.frontLeftMotorEncoder.getDistance())
@@ -359,13 +345,16 @@ class MyRobot(commands2.TimedCommandRobot):
         time.sleep(1)
         self.gyro.reset()
 
+    def getAutonomousCommand(self):
+        return self.robotContainer.getAutonomousCommand()
+
     def autonomousInit(self):
         if self.inStartingPosition:
             self.armBuiltinEncoder.setPosition(198)
             self.wristEncoder.reset()
             self.inStartingPosition = False
         self.mecanum.breakMotors()
-        self.autoCommand.schedule()
+        self.getAutonomousCommand().schedule()
 
     def autonomousPeriodic(self):
         # Note: Look here
@@ -614,8 +603,6 @@ class MyRobot(commands2.TimedCommandRobot):
 
         # self.arm.setIdleMode(self.arm.IdleMode.kCoast)
         self.compressor.disable()
-        if self.autoCommand is not None:
-            self.autoCommand.cancel()
 
     def disabledPeriodic(self):
         # PID Variable Declaration
