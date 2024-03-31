@@ -20,6 +20,18 @@
         {
           "type": "named",
           "data": {
+            "name": "intakeOff"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "endGame"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
             "name": "stop"
           }
         }
