@@ -8,13 +8,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "CenterToNote"
+            "pathName": "Center2"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Center2"
+            "pathName": "CenterToNote"
           }
         },
         {

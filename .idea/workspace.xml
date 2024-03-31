@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="24785337-e12c-422e-8499-d5f66c5667e6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/actuatorSystem.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/drivetrain.py" beforeDir="false" afterPath="$PROJECT_DIR$/drivetrain.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/robot.py" beforeDir="false" afterPath="$PROJECT_DIR$/robot.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/robotcontainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/robotcontainer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/simgui-window.json" beforeDir="false" afterPath="$PROJECT_DIR$/simgui-window.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/simgui.json" beforeDir="false" afterPath="$PROJECT_DIR$/simgui.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
