@@ -79,6 +79,34 @@ class MyRobot(commands2.TimedCommandRobot):
 
     def robotInit(self):
         """Robot initialization function"""
+        # Drivetrain PID Network table Values
+        self.drivetrainNetworkTable = ntcore.NetworkTableInstance.getDefault().getTable("DriveTrainPID")
+
+        # Set Persistence
+        self.drivetrainNetworkTable.getDoubleTopic("kPn").setPersistent(True)
+        self.drivetrainNetworkTable.getDoubleTopic("kIn").setPersistent(True)
+        self.drivetrainNetworkTable.getDoubleTopic("kDn").setPersistent(True)
+        self.drivetrainNetworkTable.getDoubleTopic("kMn").setPersistent(True)
+
+        # Publish
+        self.kPnPub = self.drivetrainNetworkTable.getDoubleTopic("kPn").publish()
+        self.kPnPub.set(3)
+        self.kInPub = self.drivetrainNetworkTable.getDoubleTopic("kIn").publish()
+        self.kInPub.set(0)
+        self.kDnPub = self.drivetrainNetworkTable.getDoubleTopic("kDn").publish()
+        self.kDnPub.set(0)
+        self.kMnPub = self.drivetrainNetworkTable.getDoubleTopic("kMn").publish()
+        self.kMnPub.set(2)
+
+        # Subscribe
+        self.kPnSub = self.drivetrainNetworkTable.getDoubleTopic("kPn").subscribe(3)
+        self.kInSub = self.drivetrainNetworkTable.getDoubleTopic("kIn").subscribe(0)
+        self.kDnSub = self.drivetrainNetworkTable.getDoubleTopic("kDn").subscribe(0)
+        self.kMnSub = self.drivetrainNetworkTable.getDoubleTopic("kMn").subscribe(2)
+        self.kPnSub.get()
+        self.kInSub.get()
+        self.kDnSub.get()
+        self.kMnSub.get()
 
         # Sticky Vars
         self.armEncoderReseting = False
@@ -123,13 +151,15 @@ class MyRobot(commands2.TimedCommandRobot):
             self.frontLeftMotorEncoder,
             self.rearLeftMotorEncoder,
             self.frontRightMotorEncoder,
-            self.rearRightMotorEncoder
+            self.rearRightMotorEncoder,
+            self.kPnSub,
+            self.kInSub,
+            self.kDnSub,
+            self.kMnSub
         )
 
-        self.samPath = self.mecanum.followSam()
-
         self.robotContainer = RobotContainer(self.mecanum, self.intakeOffAutoFunction, self.autoEndWristFunction, self.ender2)
-        self.mecanum.resetPose(wpimath.geometry.Pose2d(2.84, 5.52, 0))
+        # self.mecanum.resetPose(wpimath.geometry.Pose2d(2.84, 5.52, 0))
         # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
         self.xspeedLimiter = wpimath.filter.SlewRateLimiter(3)
         self.yspeedLimiter = wpimath.filter.SlewRateLimiter(3)
@@ -254,6 +284,12 @@ class MyRobot(commands2.TimedCommandRobot):
         self.rearLeftMotorEncoderNetworkTopic = table.getDoubleTopic("rearLeftMotorEncoder").publish()
         self.frontRightMotorEncoderNetworkTopic = table.getDoubleTopic("frontRightMotorEncoder").publish()
         self.rearRightMotorEncoderNetworkTopic = table.getDoubleTopic("rearRightMotorEncoder").publish()
+        self.frontLeftMotorTempPub = table.getDoubleTopic("frontLeftMotorTemp").publish()
+        self.frontRightMotorTempPub = table.getDoubleTopic("frontRightMotorTemp").publish()
+        self.rearLeftMotorTempPub = table.getDoubleTopic("rearLeftMotorTemp").publish()
+        self.rearRightMotorTempPub = table.getDoubleTopic("rearRightMotorTemp").publish()
+        self.wristTempPub = table.getDoubleTopic("WristTemp").publish()
+        self.armTempPub = table.getDoubleTopic("ArmTemp").publish()
         self.PidgeonCompass.set(self.pidgen.getCompassHeading())
         self.GryoConnected.set(False)
 
@@ -318,6 +354,12 @@ class MyRobot(commands2.TimedCommandRobot):
         self.actuatorMode.setIdle()
 
     def robotPeriodic(self):
+        self.wristTempPub.set(self.wrist.getMotorTemperature())
+        self.armTempPub.set(self.arm.getMotorTemperature())
+        self.frontLeftMotorTempPub.set(self.mecanum.frontLeftMotor.getTemperature())
+        self.frontRightMotorTempPub.set(self.mecanum.frontRightMotor.getTemperature())
+        self.rearLeftMotorTempPub.set(self.mecanum.rearLeftMotor.getTemperature())
+        self.rearRightMotorTempPub.set(self.mecanum.rearRightMotor.getTemperature())
         self.intakeEncoderNet.set(self.intakeEncoder.getPosition())
         self.armDownLimitSwitchNetwork.set(self.armDownLimitSwitch.get())
         self.armUpLimitSwitchNetwork.set(self.armUpLimitSwitch.get())
@@ -531,29 +573,11 @@ class MyRobot(commands2.TimedCommandRobot):
         Idiot_y = math.pow(y, 3)
         Idiot_x = math.pow(x, 3)
         Idiot_rx = math.pow(rx, 3)
-        xSpeed = (
-                -self.xspeedLimiter.calculate(Idiot_y)
-                * Drivetrain.kMaxSpeed
-        )
 
-        # Get the y speed or sideways/strafe speed. We are inverting this because
-        # we want a positive value when we pull to the left. Xbox controllers
-        # return positive values when you pull to the right by default.
-        ySpeed = (
-                -self.yspeedLimiter.calculate(Idiot_x)
-                * Drivetrain.kMaxSpeed
-        )
-
-        # Get the rate of angular rotation. We are inverting this because we want a
-        # positive value when we pull to the left (remember, CCW is positive in
-        # mathematics). Xbox's controllers return positive values when you pull to
-        # the right by default.
-        rot = (
-                -self.rotLimiter.calculate(Idiot_rx)
-                * Drivetrain.kMaxAngularSpeed
-        )
-
-        self.mecanum.drive(xSpeed, ySpeed, rot, True, self.getPeriod())
+        self.mecanum.rearLeftMotor.set()
+        self.mecanum.rearRightMotor.set()
+        self.mecanum.frontRightMotor.set()
+        self.mecanum.frontLeftMotor.set()
 
         # Actuator Mode Logic
         if self.actuatorMode.Mode == self.actuatorMode.Idle:

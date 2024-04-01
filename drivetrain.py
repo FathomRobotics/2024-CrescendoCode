@@ -34,14 +34,14 @@ class Drivetrain:
     """Represents a differential drive style drivetrain."""
 
     kMaxSpeed = 3.0  # 3 meters per second
-    kMaxAngularSpeed = math.pi * 3  # 1/2 rotation per second
+    kMaxAngularSpeed = math.pi*0.5
 
     def resetGryoThread(self):
         time.sleep(1)
         self.gyro.reset()
 
-    def __init__(self, frontLeftMotorEncoder, rearLeftMotorEncoder, frontRightMotorEncoder, rearRightMotorEncoder):
-        self.pathInit = pathplannerlib.path.PathPlannerPath.fromPathFile('Simple1')
+    def __init__(self, frontLeftMotorEncoder, rearLeftMotorEncoder, frontRightMotorEncoder, rearRightMotorEncoder, kPn, kIn, kDn, kMn):
+        self.kMaxSpeed = kMn.get()
         self.field = wpilib.Field2d()
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
         self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
@@ -100,7 +100,7 @@ class Drivetrain:
             self.driveRobotRelative,  # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
             HolonomicPathFollowerConfig(  # HolonomicPathFollowerConfig, this should likely live in your Constants class
                 PIDConstants(self.kP, 0.0, 0.0),  # Translation PID constants
-                PIDConstants(0.25, 0.1, 0.0),  # Rotation PID constants
+                PIDConstants(0.005, kIn.get(), kDn.get()),  # Rotation PID constants
                 self.kMaxSpeed,  # Max module speed, in m/s
                 0.381,  # Drive base radius in meters. Distance from robot center to furthest module.
                 ReplanningConfig()  # Default path replanning config. See the API for the options here
@@ -108,23 +108,6 @@ class Drivetrain:
             self.shouldFlipPath,  # Supplier to control path flipping based on alliance color
             self  # Reference to this subsystem to set requirements
         )
-
-    def followSam(self):
-        return pathplannerlib.auto.FollowPathHolonomic(
-            self.pathInit,
-            self.getPose,
-            self.getCurrentSpeeds,
-            self.driveRobotRelative,
-            HolonomicPathFollowerConfig(  # HolonomicPathFollowerConfig, this should likely live in your Constants class
-                PIDConstants(1.2, 0.0, 0.0),  # Translation PID constants
-                PIDConstants(0.7, 0.0, 0.0),  # Rotation PID constants
-                2,  # Max module speed, in m/s
-                0.381,  # Drive base radius in meters. Distance from robot center to furthest module.
-                ReplanningConfig()  # Default path replanning config. See the API for the options here
-            ),
-            self.shouldFlipPath,  # Supplier to control path flipping based on alliance color
-            self
-        ).andThen()
 
     def getCurrentState(self) -> wpimath.kinematics.MecanumDriveWheelSpeeds:
         """Returns the current state of the drivetrain."""

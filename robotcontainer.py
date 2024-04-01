@@ -14,15 +14,19 @@ class RobotContainer:
         self.configureBindings()
         NamedCommands.registerCommand("intakeOff", Intake(stopIntakeFunction))
         NamedCommands.registerCommand("endGame", EndRobotAuto(self.wristFunction))
-        self.autoChooser = pathplannerlib.auto.AutoBuilder.buildAuto("SamAuto")
-        NamedCommands.registerCommand("stop", StopRobotAuto(self.mechanumSubsystem, self.autoChooser.cancel, self.ender2))
+        self.autoChooser = wpilib.SendableChooser()
+        self.autoChooser.setDefaultOption("Amp Side", pathplannerlib.auto.AutoBuilder.buildAuto("AmpAuto"))
+        self.autoChooser.addOption("Center Auto", pathplannerlib.auto.AutoBuilder.buildAuto("CenterAuto"))
+        self.autoChooser.addOption("Stage Side", pathplannerlib.auto.AutoBuilder.buildAuto("StageAuto"))
+        self.autoChooser.addOption("Amp Side", pathplannerlib.auto.AutoBuilder.buildAuto("AmpAuto"))
+        NamedCommands.registerCommand("stop", StopRobotAuto(self.mechanumSubsystem, self.autoChooser.getSelected().cancel, self.ender2))
         SmartDashboard.putData("Auto Mode", self.autoChooser)
 
     def configureBindings(self):
         pass
 
     def getAutonomousCommand(self):
-        return self.autoChooser
+        return self.autoChooser.getSelected()
 
 
 class StopRobotAuto(commands2.InstantCommand):
