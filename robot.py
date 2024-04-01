@@ -158,6 +158,13 @@ class MyRobot(commands2.TimedCommandRobot):
             self.kMnSub
         )
 
+        self.drive = wpilib.drive.MecanumDrive(
+            self.mecanum.frontLeftMotor,
+            self.mecanum.rearLeftMotor,
+            self.mecanum.frontRightMotor,
+            self.mecanum.rearRightMotor,
+        )
+
         self.robotContainer = RobotContainer(self.mecanum, self.intakeOffAutoFunction, self.autoEndWristFunction, self.ender2)
         # self.mecanum.resetPose(wpimath.geometry.Pose2d(2.84, 5.52, 0))
         # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
@@ -574,10 +581,7 @@ class MyRobot(commands2.TimedCommandRobot):
         Idiot_x = math.pow(x, 3)
         Idiot_rx = math.pow(rx, 3)
 
-        self.mecanum.rearLeftMotor.set()
-        self.mecanum.rearRightMotor.set()
-        self.mecanum.frontRightMotor.set()
-        self.mecanum.frontLeftMotor.set()
+        self.drive.driveCartesian(Idiot_x, Idiot_y, Idiot_rx, -self.gyro.getRotation2d())
 
         # Actuator Mode Logic
         if self.actuatorMode.Mode == self.actuatorMode.Idle:
