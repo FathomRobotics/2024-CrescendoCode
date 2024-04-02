@@ -90,11 +90,6 @@ class MyRobot(commands2.TimedCommandRobot):
         )
 
         self.robotContainer = RobotContainer(self.mecanum, self.intakeOffAutoFunction, self.autoEndWristFunction, self.ender2)
-        # self.mecanum.resetPose(wpimath.geometry.Pose2d(2.84, 5.52, 0))
-        # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
-        self.xspeedLimiter = wpimath.filter.SlewRateLimiter(3)
-        self.yspeedLimiter = wpimath.filter.SlewRateLimiter(3)
-        self.rotLimiter = wpimath.filter.SlewRateLimiter(3)
 
         # NavX Initialization
         self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
