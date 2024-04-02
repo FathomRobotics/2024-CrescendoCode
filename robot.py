@@ -53,7 +53,7 @@ class MyRobot(commands2.TimedCommandRobot):
         self.teleautoArmUp = False
         self.teleautoWristOut = False
         self.inStartingPosition = True  # Assume starting in starting position
-        self.isTuningDrivePID = False
+        self.isTuningPID = False
         self.shooterOnAuto = True
         self.runAuto = False
         self.autoRan = False
@@ -291,7 +291,7 @@ class MyRobot(commands2.TimedCommandRobot):
         self.wristEncoderNetwork.set(self.wristEncoder.get())
         self.chassisSpeedsPublisher.set(str(self.mecanum.getCurrentSpeeds()))
         self.drivePPub.set(self.mecanum.frontLeftPIDController.getP())
-        if self.isTuningDrivePID:
+        if self.isTuningPID:
             self.mecanum.feedforward = wpimath.controller.SimpleMotorFeedforwardMeters(self.driveFeedforwardSub.get(),
                                                                                        self.driveFeedforwardSub.get())
             # Front Left Controller
@@ -596,26 +596,27 @@ class MyRobot(commands2.TimedCommandRobot):
 
     def disabledPeriodic(self):
         # PID Variable Declaration
-        self.armPID = PIDController(
-            self.armPVarSub.get(),
-            self.armIVarSub.get(),
-            self.armDVarSub.get()
-        )
-        self.shooterPID = PIDController(
-            self.shooterPValueSub.get(),
-            self.shooterIValueSub.get(),
-            self.shooterDValueSub.get()
-        )
-        self.shooterHelperPID = PIDController(
-            self.shooterHelperPValueSub.get(),
-            self.shooterHelperIValueSub.get(),
-            self.shooterHelperDValueSub.get()
-        )
-        self.wristPID = PIDController(
-            self.wristPSub.get(),
-            self.wristISub.get(),
-            self.wristDSub.get()
-        )
+        if self.isTuningPID:
+            self.armPID = PIDController(
+                self.armPVarSub.get(),
+                self.armIVarSub.get(),
+                self.armDVarSub.get()
+            )
+            self.shooterPID = PIDController(
+                self.shooterPValueSub.get(),
+                self.shooterIValueSub.get(),
+                self.shooterDValueSub.get()
+            )
+            self.shooterHelperPID = PIDController(
+                self.shooterHelperPValueSub.get(),
+                self.shooterHelperIValueSub.get(),
+                self.shooterHelperDValueSub.get()
+            )
+            self.wristPID = PIDController(
+                self.wristPSub.get(),
+                self.wristISub.get(),
+                self.wristDSub.get()
+            )
         self.currentArmPosition = 0
 
     def testInit(self):
