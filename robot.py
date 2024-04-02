@@ -28,6 +28,7 @@ from wpimath.controller import PIDController
 import pathplannerlib
 import pathplannerlib.path
 import wpimath.filter
+import cscore
 
 from drivetrain import Drivetrain
 from robotcontainer import RobotContainer
@@ -79,6 +80,7 @@ class MyRobot(commands2.TimedCommandRobot):
 
     def robotInit(self):
         """Robot initialization function"""
+        cscore.CameraServer.startAutomaticCapture()
         # Drivetrain PID Network table Values
         self.drivetrainNetworkTable = ntcore.NetworkTableInstance.getDefault().getTable("DriveTrainPID")
 
@@ -361,8 +363,8 @@ class MyRobot(commands2.TimedCommandRobot):
         self.actuatorMode.setIdle()
 
     def robotPeriodic(self):
-        self.wristTempPub.set(self.wrist.getMotorTemperature())
-        self.armTempPub.set(self.arm.getMotorTemperature())
+        self.wristTempPub.set((self.wrist.getMotorTemperature()*(9/5))+32)
+        self.armTempPub.set((self.arm.getMotorTemperature()*(9/5))+32)
         self.frontLeftMotorTempPub.set(self.mecanum.frontLeftMotor.getTemperature())
         self.frontRightMotorTempPub.set(self.mecanum.frontRightMotor.getTemperature())
         self.rearLeftMotorTempPub.set(self.mecanum.rearLeftMotor.getTemperature())
@@ -535,7 +537,7 @@ class MyRobot(commands2.TimedCommandRobot):
 
         self.actuatorMode.setIdle()  # Set the Actuator mode to Idle
 
-        self.mecanum.coastMotors()  # Make Motors Coast at start
+        self.mecanum.breakMotors()  # Make Motors Coast at start
 
         # self.arm.setIdleMode(self.arm.IdleMode.kBrake)  # Enable Arm Breaking
 
@@ -543,9 +545,9 @@ class MyRobot(commands2.TimedCommandRobot):
         """Runs the motors with Mecanum drive."""
         # Break Button (Driver 1 B)
         if self.driver1.getBButton():
-            self.mechanum.breakMotors()
-        else:
             self.mecanum.coastMotors()
+        else:
+            self.mecanum.breakMotors()
 
         # Intake Button
         if self.driver2.getBButtonReleased():
