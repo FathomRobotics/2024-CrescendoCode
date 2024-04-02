@@ -40,8 +40,8 @@ class Drivetrain:
         time.sleep(1)
         self.gyro.reset()
 
-    def __init__(self, frontLeftMotorEncoder, rearLeftMotorEncoder, frontRightMotorEncoder, rearRightMotorEncoder, kPn, kIn, kDn, kMn):
-        self.kMaxSpeed = kMn.get()
+    def __init__(self, frontLeftMotorEncoder, rearLeftMotorEncoder, frontRightMotorEncoder, rearRightMotorEncoder):
+        self.kMaxSpeed = 3
         self.field = wpilib.Field2d()
         self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
         self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
@@ -100,7 +100,7 @@ class Drivetrain:
             self.driveRobotRelative,  # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
             HolonomicPathFollowerConfig(  # HolonomicPathFollowerConfig, this should likely live in your Constants class
                 PIDConstants(self.kP, 0.0, 0.0),  # Translation PID constants
-                PIDConstants(0.005, kIn.get(), kDn.get()),  # Rotation PID constants
+                PIDConstants(0.005, 0, 0),  # Rotation PID constants
                 self.kMaxSpeed,  # Max module speed, in m/s
                 0.381,  # Drive base radius in meters. Distance from robot center to furthest module.
                 ReplanningConfig()  # Default path replanning config. See the API for the options here

@@ -33,7 +33,6 @@ import cscore
 from drivetrain import Drivetrain
 from robotcontainer import RobotContainer
 from actuatorsystemmodemanager import ActuatorSystemModeManager
-# python -m robotpy deploy --nc --skip-tests
 
 
 class MyRobot(commands2.TimedCommandRobot):
@@ -45,33 +44,6 @@ class MyRobot(commands2.TimedCommandRobot):
     def robotInit(self):
         """Robot initialization function"""
         cscore.CameraServer.startAutomaticCapture()
-        # Drivetrain PID Network table Values
-        self.drivetrainNetworkTable = ntcore.NetworkTableInstance.getDefault().getTable("DriveTrainPID")
-
-        # Set Persistence
-        self.drivetrainNetworkTable.getDoubleTopic("kPn").setPersistent(True)
-        self.drivetrainNetworkTable.getDoubleTopic("kIn").setPersistent(True)
-        self.drivetrainNetworkTable.getDoubleTopic("kDn").setPersistent(True)
-        self.drivetrainNetworkTable.getDoubleTopic("kMn").setPersistent(True)
-
-        # Publish
-        self.kPnPub = self.drivetrainNetworkTable.getDoubleTopic("kPn").publish()
-        self.kPnPub.set(3)
-        self.kInPub = self.drivetrainNetworkTable.getDoubleTopic("kIn").publish()
-        self.kInPub.set(0)
-        self.kDnPub = self.drivetrainNetworkTable.getDoubleTopic("kDn").publish()
-        self.kDnPub.set(0)
-        self.kMnPub = self.drivetrainNetworkTable.getDoubleTopic("kMn").publish()
-        self.kMnPub.set(2)
-
-        # Subscribe
-        self.kPnSub = self.drivetrainNetworkTable.getDoubleTopic("kPn").subscribe(3)
-        self.kInSub = self.drivetrainNetworkTable.getDoubleTopic("kIn").subscribe(0)
-        self.kDnSub = self.drivetrainNetworkTable.getDoubleTopic("kDn").subscribe(0)
-        self.kMnSub = self.drivetrainNetworkTable.getDoubleTopic("kMn").subscribe(2)
-        self.kPnSub.get()
-        self.kInSub.get()
-        self.kDnSub.get()
         self.kMnSub.get()
 
         # Sticky Vars
@@ -89,20 +61,10 @@ class MyRobot(commands2.TimedCommandRobot):
         self.autoEndWristVal = False
         self.disableAutoWheels = False
 
-        # Kinematics and Odometry
-        # Locations of the wheels relative to the robot center.
-        # 21.375in Wide
-        # 20.5in Long
-        wpilib.reportWarning("STARTING!!!", False)
         wpilib.SmartDashboard.init()
         self.field2d = wpilib.Field2d()
         # Drive Encoders
-        # (360/2048) degrees per pulse
-        # 6in wheel
-        # 0.1524pi/2048
-        a = 2
-        b = 4.36
-        distancePerPulse = (a/b)/2048
+        distancePerPulse = (2/4.36)/2048
         # Wheels have a radius
         self.frontLeftMotorEncoder = wpilib.Encoder(0, 1, False)
         self.frontLeftMotorEncoder.setDistancePerPulse(distancePerPulse)
@@ -118,10 +80,6 @@ class MyRobot(commands2.TimedCommandRobot):
             self.rearLeftMotorEncoder,
             self.frontRightMotorEncoder,
             self.rearRightMotorEncoder,
-            self.kPnSub,
-            self.kInSub,
-            self.kDnSub,
-            self.kMnSub
         )
 
         self.drive = wpilib.drive.MecanumDrive(
@@ -180,7 +138,6 @@ class MyRobot(commands2.TimedCommandRobot):
         self.solenoidBlue = self.pnumaticsHub.makeSolenoid(1)
         self.compressor = self.pnumaticsHub.makeCompressor()
         self.compressor.isEnabled()
-        # self.frontLeftMotor.setInverted(True)
 
         # Network Tables Initialization
         inst = ntcore.NetworkTableInstance.getDefault()
@@ -340,7 +297,6 @@ class MyRobot(commands2.TimedCommandRobot):
         self.chassisSpeedsPublisher.set(str(self.mecanum.getCurrentSpeeds()))
         self.drivePPub.set(self.mecanum.frontLeftPIDController.getP())
         if self.isTuningDrivePID:
-            wpilib.reportWarning("---------- TUNING DRIVE PID ------------")
             self.mecanum.feedforward = wpimath.controller.SimpleMotorFeedforwardMeters(self.driveFeedforwardSub.get(),
                                                                                        self.driveFeedforwardSub.get())
             # Front Left Controller
@@ -390,9 +346,6 @@ class MyRobot(commands2.TimedCommandRobot):
 
     def autonomousPeriodic(self):
         # Note: Look here
-        # https://github.com/robotpy/examples/blob/main/GyroDriveCommands/commands/turntoangle.py
-        # https://docs.wpilib.org/en/stable/docs/software/pathplanning/trajectory-tutorial/characterizing-drive.html
-        # https://docs.wpilib.org/en/stable/docs/software/advanced-controls/index.html
 
         # Get the rotation of the robot from the gyro.
         # Put Wrist Into Shooting Position
@@ -489,11 +442,6 @@ class MyRobot(commands2.TimedCommandRobot):
         self.compressor.enableDigital()
 
         # Reset Encoders
-        # self.frontLeftMotorEncoder.reset()
-        # self.rearLeftMotorEncoder.reset()
-        # self.frontRightMotorEncoder.reset()
-        # self.rearRightMotorEncoder.reset()
-        # TODO: Make sure that this encoder is not reset in a match (IF FMS ATTACHED)
         if self.inStartingPosition:
             self.armBuiltinEncoder.setPosition(198)
             self.inStartingPosition = False
@@ -502,8 +450,6 @@ class MyRobot(commands2.TimedCommandRobot):
         self.actuatorMode.setIdle()  # Set the Actuator mode to Idle
 
         self.mecanum.breakMotors()  # Make Motors Coast at start
-
-        # self.arm.setIdleMode(self.arm.IdleMode.kBrake)  # Enable Arm Breaking
 
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
@@ -596,8 +542,6 @@ class MyRobot(commands2.TimedCommandRobot):
             if self.teleautoArmUp and self.teleautoWristOut:  # If Arm up and wrist position is flipped then drop note
                 # TODO: Add driver 2 rumble
                 pass
-
-            # TODO: If intake/outake spins for x amount of revolutions set mode to idle
         elif self.actuatorMode.Mode == self.actuatorMode.Reset:
             self.currentArmPosition = 2
             self.currentWristPosition = 2
@@ -642,8 +586,6 @@ class MyRobot(commands2.TimedCommandRobot):
         self.shooterHelperRPM.set(self.shooterHelperEncoder.getVelocity())
 
     def disabledInit(self):
-
-        # self.arm.setIdleMode(self.arm.IdleMode.kCoast)
         self.compressor.disable()
         self.arm.set(0)
         self.wrist.set(0)
@@ -682,26 +624,11 @@ class MyRobot(commands2.TimedCommandRobot):
         self.currentArmPosition = 0
 
     def testInit(self):
-        if self.inStartingPosition:
-            self.armBuiltinEncoder.setPosition(198)
-            self.wristEncoder.reset()
-            self.inStartingPosition = False
         self.arm.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
         self.wrist.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
         self.intake.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
 
     def testPeriodic(self):
-        # if self.armDownLimitSwitch.get() is False:
-        #     self.arm.set(0.05)
-        #     if self.armEncoderReseting is False:
-        #         self.armBuiltinEncoder.setPosition(0)
-        #     self.armEncoderReseting = True
-        # elif self.armUpLimitSwitch.get() is False:
-        #     self.arm.set(-0.125)
-        # else:
-        #     self.armEncoderReseting = False
-        #     self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), 50))
-        # self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -1000))
         pass
 
     def testExit(self):
