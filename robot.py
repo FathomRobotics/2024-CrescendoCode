@@ -448,7 +448,7 @@ class MyRobot(commands2.TimedCommandRobot):
 
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
-        # Break Button (Driver 1 B)
+        # Coast Button (Driver 1 B)
         if self.driver1.getBButton():
             self.mecanum.coastMotors()
         else:
