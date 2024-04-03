@@ -5,7 +5,7 @@
       "x": 0.6604,
       "y": 6.900549999999999
     },
-    "rotation": 179.21632372527162
+    "rotation": -120.0
   },
   "command": {
     "type": "sequential",
@@ -15,6 +15,12 @@
           "type": "path",
           "data": {
             "pathName": "AmpToNote"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Amp2"
           }
         },
         {

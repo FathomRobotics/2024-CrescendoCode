@@ -6,9 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="24785337-e12c-422e-8499-d5f66c5667e6" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deploy/pathplanner/autos/AmpAuto.auto" beforeDir="false" afterPath="$PROJECT_DIR$/deploy/pathplanner/autos/AmpAuto.auto" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deploy/pathplanner/autos/CenterAuto.auto" beforeDir="false" afterPath="$PROJECT_DIR$/deploy/pathplanner/autos/CenterAuto.auto" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deploy/pathplanner/autos/StageAuto.auto" beforeDir="false" afterPath="$PROJECT_DIR$/deploy/pathplanner/autos/StageAuto.auto" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/drivetrain.py" beforeDir="false" afterPath="$PROJECT_DIR$/drivetrain.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/robot.py" beforeDir="false" afterPath="$PROJECT_DIR$/robot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/simgui-window.json" beforeDir="false" afterPath="$PROJECT_DIR$/simgui-window.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/simgui.json" beforeDir="false" afterPath="$PROJECT_DIR$/simgui.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/robotcontainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/robotcontainer.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,18 +37,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;Python.frcdash.executor&quot;: &quot;Run&quot;,
-    &quot;Python.gradualFunctionTest (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.pidController (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.pidTest.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;withAutoExperimental&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "Python.frcdash.executor": "Run",
+    "Python.gradualFunctionTest (1).executor": "Run",
+    "Python.pidController (1).executor": "Run",
+    "Python.pidTest.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "Alpha-Release-1.1.1",
+    "settings.editor.selected.configurable": "preferences.lookFeel"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Python.frcdash">
     <configuration name="frcdash" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="2024-Crescendo-Code" />

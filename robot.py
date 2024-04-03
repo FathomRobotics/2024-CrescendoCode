@@ -44,7 +44,6 @@ class MyRobot(commands2.TimedCommandRobot):
     def robotInit(self):
         """Robot initialization function"""
         cscore.CameraServer.startAutomaticCapture()
-        self.kMnSub.get()
 
         # Sticky Vars
         self.armEncoderReseting = False
@@ -327,6 +326,7 @@ class MyRobot(commands2.TimedCommandRobot):
         return self.robotContainer.getAutonomousCommand()
 
     def autonomousInit(self):
+        self.wristPID.setP(0.05)
         self.runAuto = False
         self.shooterOnAuto = True
         self.autoEndWristVal = False
@@ -362,16 +362,19 @@ class MyRobot(commands2.TimedCommandRobot):
         if self.autoArmDownStart and (self.armBuiltinEncoder.getPosition() <= 30):
             if self.intakeEncoder.getPosition() > 150:
                 if not self.autoEndWristVal:
-                    self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -3000))
+                    self.wristPID.setP(0.065)
+                    self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4000))
                 self.shooterOnAuto = False
                 self.runAuto = True
             else:
                 self.intake.set(1)  # Spit note out of jaws
         else:
             if not self.autoEndWristVal:
+                self.wristPID.setP(0.05)
                 self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4500))
 
         if self.runAuto and (self.autoRan is False):
+            self.getAutonomousCommand()
             self.getAutonomousCommand().schedule()
             self.autoRan = True
 
@@ -385,6 +388,7 @@ class MyRobot(commands2.TimedCommandRobot):
                 self.mecanum.frontRightMotor.set(0.125)
                 self.mecanum.frontLeftMotor.set(0.125)
                 if self.autoEndWristVal:
+                    self.wristPID.setP(0.05)
                     self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4500))
                 if (self.wristEncoder.get() <= -4400) and self.autoEndWristVal:
                     self.intake.set(1)
@@ -410,7 +414,7 @@ class MyRobot(commands2.TimedCommandRobot):
                 self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), 0))
         else:
             if self.armDownLimitSwitch.get() is False:
-                self.arm.set(0.05)
+                self.arm.set(0.03)
                 if self.armEncoderReseting is False:
                     self.armBuiltinEncoder.setPosition(0)
                 self.armEncoderReseting = True
@@ -419,6 +423,9 @@ class MyRobot(commands2.TimedCommandRobot):
             else:
                 self.armEncoderReseting = False
                 self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), 120))
+
+    def autonomousExit(self):
+        self.wristPID.setP(0.05)
 
     def teleopInit(self):
         # PID Variable Declaration

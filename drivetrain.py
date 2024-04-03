@@ -34,7 +34,7 @@ class Drivetrain:
     """Represents a differential drive style drivetrain."""
 
     kMaxSpeed = 3.0  # 3 meters per second
-    kMaxAngularSpeed = math.pi*0.5
+    kMaxAngularSpeed = math.pi*0.25
 
     def resetGryoThread(self):
         time.sleep(1)
@@ -77,7 +77,7 @@ class Drivetrain:
         )
 
         self.odometry = wpimath.kinematics.MecanumDriveOdometry(
-            self.kinematics, self.gyro.getRotation2d(), self.getCurrentDistances()
+            self.kinematics, wpimath.geometry.Rotation2d(self.gyro.getRotation2d().radians()), self.getCurrentDistances()
         )
 
         # Gains are for example purposes only - must be determined for your own robot!
@@ -99,8 +99,8 @@ class Drivetrain:
             self.getCurrentSpeeds,  # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
             self.driveRobotRelative,  # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
             HolonomicPathFollowerConfig(  # HolonomicPathFollowerConfig, this should likely live in your Constants class
-                PIDConstants(self.kP, 0.0, 0.0),  # Translation PID constants
-                PIDConstants(0.005, 0, 0),  # Rotation PID constants
+                PIDConstants(2, 0.0, 0.0),  # Translation PID constants
+                PIDConstants(0.000000001, 0, 0),  # Rotation PID constants
                 self.kMaxSpeed,  # Max module speed, in m/s
                 0.381,  # Drive base radius in meters. Distance from robot center to furthest module.
                 ReplanningConfig()  # Default path replanning config. See the API for the options here
@@ -128,7 +128,7 @@ class Drivetrain:
         self.rearRightPIDController.setPID(0, 0, 0)
 
     def resetPose(self, pose):
-        self.odometry.resetPosition(self.gyro.getRotation2d(), self.getCurrentDistances(), pose)
+        self.odometry.resetPosition(wpimath.geometry.Rotation2d(self.gyro.getRotation2d().radians()), self.getCurrentDistances(), pose)
 
     def getCurrentSpeeds(self):
         return self.kinematics.toChassisSpeeds(self.getCurrentState())
@@ -191,7 +191,7 @@ class Drivetrain:
             ChassisSpeeds.discretize(
                 (
                     ChassisSpeeds.fromFieldRelativeSpeeds(
-                        xSpeed, ySpeed, rot, self.gyro.getRotation2d()
+                        xSpeed, ySpeed, rot, wpimath.geometry.Rotation2d(self.gyro.getRotation2d().radians())
                     )
                     if fieldRelative
                     else ChassisSpeeds(xSpeed, ySpeed, rot)
@@ -204,7 +204,7 @@ class Drivetrain:
 
     def updateOdometry(self):
         """Updates the field-relative position."""
-        self.odometry.update(self.gyro.getRotation2d(), self.getCurrentDistances())
+        self.odometry.update(wpimath.geometry.Rotation2d(self.gyro.getRotation2d().radians()), self.getCurrentDistances())
 
     def coastMotors(self):
         self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
