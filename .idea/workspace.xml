@@ -6,7 +6,14 @@
   <component name="ChangeListManager">
     <list default="true" id="24785337-e12c-422e-8499-d5f66c5667e6" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+<<<<<<< Updated upstream
       <change beforePath="$PROJECT_DIR$/robot.py" beforeDir="false" afterPath="$PROJECT_DIR$/robot.py" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/deploy/pathplanner/autos/CenterAuto.auto" beforeDir="false" afterPath="$PROJECT_DIR$/deploy/pathplanner/autos/CenterAuto.auto" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/robot.py" beforeDir="false" afterPath="$PROJECT_DIR$/robot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/robotcontainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/robotcontainer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/simgui-ds.json" beforeDir="false" afterPath="$PROJECT_DIR$/simgui-ds.json" afterDir="false" />
+>>>>>>> Stashed changes
       <change beforePath="$PROJECT_DIR$/simgui-window.json" beforeDir="false" afterPath="$PROJECT_DIR$/simgui-window.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/simgui.json" beforeDir="false" afterPath="$PROJECT_DIR$/simgui.json" afterDir="false" />
     </list>
@@ -42,7 +49,11 @@
     &quot;Python.pidController (1).executor&quot;: &quot;Run&quot;,
     &quot;Python.pidTest.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+<<<<<<< Updated upstream
     &quot;git-widget-placeholder&quot;: &quot;withAutoExperimental&quot;,
+=======
+    &quot;git-widget-placeholder&quot;: &quot;Alpha-Release-1.1.1&quot;,
+>>>>>>> Stashed changes
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
   }
 }</component>
