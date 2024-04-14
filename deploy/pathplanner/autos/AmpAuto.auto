@@ -2,21 +2,15 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 0.6604,
-      "y": 6.900549999999999
+      "x": 0.7023114046228107,
+      "y": 6.719388054160724
     },
-    "rotation": 179.21632372527162
+    "rotation": 60.0
   },
   "command": {
     "type": "sequential",
     "data": {
       "commands": [
-        {
-          "type": "path",
-          "data": {
-            "pathName": "AmpToNote"
-          }
-        },
         {
           "type": "named",
           "data": {
@@ -24,9 +18,9 @@
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "endGame"
+            "pathName": "AmpToNote"
           }
         },
         {

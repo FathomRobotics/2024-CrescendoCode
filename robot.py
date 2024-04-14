@@ -150,13 +150,13 @@ class MyRobot(commands2.TimedCommandRobot):
         b = 4.36
         distancePerPulse = (a/b)/2048
         # Wheels have a radius
-        self.frontLeftMotorEncoder = wpilib.Encoder(0, 1, False)
+        self.frontLeftMotorEncoder = wpilib.Encoder(0, 1, True)
         self.frontLeftMotorEncoder.setDistancePerPulse(distancePerPulse)
-        self.rearLeftMotorEncoder = wpilib.Encoder(2, 3, False)
+        self.rearLeftMotorEncoder = wpilib.Encoder(2, 3, True)
         self.rearLeftMotorEncoder.setDistancePerPulse(distancePerPulse)
-        self.frontRightMotorEncoder = wpilib.Encoder(4, 5, True)
+        self.frontRightMotorEncoder = wpilib.Encoder(4, 5, False)
         self.frontRightMotorEncoder.setDistancePerPulse(distancePerPulse)
-        self.rearRightMotorEncoder = wpilib.Encoder(6, 7, True)
+        self.rearRightMotorEncoder = wpilib.Encoder(6, 7, False)
         self.rearRightMotorEncoder.setDistancePerPulse(distancePerPulse)
 
         self.mecanum = Drivetrain(
@@ -216,10 +216,10 @@ class MyRobot(commands2.TimedCommandRobot):
         self.intake.setSmartCurrentLimit(25)
         self.shooter.setSmartCurrentLimit(65)
         self.shooterHelper.setSmartCurrentLimit(65)
-        self.mecanum.frontLeftMotor.enableCurrentLimit(False)
-        self.mecanum.rearLeftMotor.enableCurrentLimit(False)
-        self.mecanum.frontRightMotor.enableCurrentLimit(False)
-        self.mecanum.rearRightMotor.enableCurrentLimit(False)
+        self.mecanum.frontLeftMotor.setSmartCurrentLimit(95)
+        self.mecanum.rearLeftMotor.setSmartCurrentLimit(95)
+        self.mecanum.frontRightMotor.setSmartCurrentLimit(95)
+        self.mecanum.rearRightMotor.setSmartCurrentLimit(95)
 
         # Enbeded Encoders
         self.intakeEncoder = self.intake.getEncoder()
@@ -244,6 +244,8 @@ class MyRobot(commands2.TimedCommandRobot):
         # TODO: Implement Field 2d View
         # TODO: Implement Speedometer
         # TODO: Implement warning lights (Power Usage, Arm Limits, PDH Temp)
+        self.shooterRPMNet = table.getDoubleTopic("ShooterRPM").publish()
+        self.shooterHelperRMPNet = table.getDoubleTopic("Shooter Helper RMP").publish()
         self.robotCentricVerifier = table.getBooleanTopic("Robot Centric Varif").publish()
         self.armCurrentNetwork = table.getDoubleTopic("Arm Current").publish()
         self.robotTopEnabledNetwork = table.getBooleanTopic("Top Powered").publish()
@@ -264,6 +266,7 @@ class MyRobot(commands2.TimedCommandRobot):
         self.armDVarSub = self.armDVar.getTopic().subscribe(0)
         self.armSPVarSub = self.armSPVar.getTopic().subscribe(0)
         self.armEncoderValueNet = table.getDoubleTopic("ArmEncoder").publish()
+        self.wristEncoderValueNet = table.getDoubleTopic("Wrist Encoder").publish()
         self.shooterVValue = table.getDoubleTopic("ShooterVValue").publish()
         self.shooterVValue.set(0.60)
         self.shooterPValue = table.getDoubleTopic("ShooterPValue").publish()
@@ -313,8 +316,8 @@ class MyRobot(commands2.TimedCommandRobot):
         self.driveFeedforwardSub = table.getDoubleTopic("DriveFeedforward").subscribe(0)
 
         # Define the Controller
-        self.driver1 = wpilib.XboxController(0)
-        self.driver2 = wpilib.XboxController(1)
+        self.driver1 = wpilib.PS5Controller(0)
+        self.driver2 = wpilib.PS5Controller(1)
         self.stickXYToggle = False
         self.shooterOn = False
 
@@ -345,7 +348,11 @@ class MyRobot(commands2.TimedCommandRobot):
         self.armSPVar.set(120)
 
         # Wrist Positions (-1000 is Intake, -4500 is Idle)
-        self.wristPositions = [-1500, -4500, 0, -4200]
+        self.wristPositions = [-1500, -4670, 0, -4200]
+        self.wristPositionNetPub = table.getIntegerArrayTopic("Wrist Positions").publish()
+        self.wristPositionNetPub.set(self.wristPositions)
+        self.wristPositionNetPub.close()
+        self.wristPositionsNet = table.getIntegerArrayTopic("Wrist Positions").subscribe(defaultValue=self.wristPositions)
         self.currentWristPosition = 1
         self.wristSP.set(0)
 
@@ -353,7 +360,23 @@ class MyRobot(commands2.TimedCommandRobot):
         self.actuatorMode = ActuatorSystemModeManager()
         self.actuatorMode.setIdle()
 
+        # Field 2D
+        self.field2d = wpilib.Field2d()
+
     def robotPeriodic(self):
+        self.shooterRPMNet.set(self.shooterEncoder.getVelocity())
+        self.shooterHelperRMPNet.set(self.shooterEncoder.getVelocity())
+        # Reset Field 2d Pose
+        self.field2d.setRobotPose(self.mecanum.getPose())
+        wpilib.SmartDashboard.putData("field2d", self.field2d)
+
+        # Change Wrist Positions
+        self.wristPositions = self.wristPositionsNet.get()
+
+        # Publish Arm Encoder Values
+        self.armEncoderValueNet.set(self.armBuiltinEncoder.getPosition())
+        self.wristEncoderValueNet.set(self.wristEncoder.get())
+
         # Publish Temperatures
         self.wristTempPub.set((self.wrist.getMotorTemperature()*(9/5))+32)
         self.armTempPub.set((self.arm.getMotorTemperature()*(9/5))+32)
@@ -364,33 +387,6 @@ class MyRobot(commands2.TimedCommandRobot):
         # Publish Limit Switch Values
         self.armDownLimitSwitchNetwork.set(self.armDownLimitSwitch.get())
         self.armUpLimitSwitchNetwork.set(self.armUpLimitSwitch.get())
-<<<<<<< Updated upstream
-        self.wristEncoderNetwork.set(self.wristEncoder.get())
-        self.chassisSpeedsPublisher.set(str(self.mecanum.getCurrentSpeeds()))
-        self.drivePPub.set(self.mecanum.frontLeftPIDController.getP())
-        if self.isTuningDrivePID:
-            wpilib.reportWarning("---------- TUNING DRIVE PID ------------")
-            self.mecanum.feedforward = wpimath.controller.SimpleMotorFeedforwardMeters(self.driveFeedforwardSub.get(),
-                                                                                       self.driveFeedforwardSub.get())
-            # Front Left Controller
-            self.mecanum.frontLeftPIDController.setP(self.drivePSub.get())
-            self.mecanum.frontLeftPIDController.setI(self.driveISub.get())
-            self.mecanum.frontLeftPIDController.setD(self.driveDSub.get())
-            # Front Right Controller
-            self.mecanum.frontRightPIDController.setP(self.drivePSub.get())
-            self.mecanum.frontRightPIDController.setI(self.driveISub.get())
-            self.mecanum.frontRightPIDController.setD(self.driveDSub.get())
-            # Rear Left Controller
-            self.mecanum.rearLeftPIDController.setP(self.drivePSub.get())
-            self.mecanum.rearLeftPIDController.setI(self.driveISub.get())
-            self.mecanum.rearLeftPIDController.setD(self.driveDSub.get())
-            # Rear Right Controller
-            self.mecanum.rearRightPIDController.setP(self.drivePSub.get())
-            self.mecanum.rearRightPIDController.setI(self.driveISub.get())
-            self.mecanum.rearRightPIDController.setD(self.driveDSub.get())
-=======
->>>>>>> Stashed changes
-
         # Update Odometry
         self.mecanum.updateOdometry()
 
@@ -402,11 +398,9 @@ class MyRobot(commands2.TimedCommandRobot):
         return self.robotContainer.getAutonomousCommand()
 
     def autonomousInit(self):
-<<<<<<< Updated upstream
-=======
+        self.intake.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
         self.robotTopEnabledNetwork.set(True)
         self.wristPID.setP(0.05)
->>>>>>> Stashed changes
         self.runAuto = False
         self.shooterOnAuto = True
         self.autoEndWristVal = False
@@ -429,16 +423,16 @@ class MyRobot(commands2.TimedCommandRobot):
         # Put Wrist Into Shooting Position
         # Start Shooter Motors
         if self.shooterOnAuto:
-            self.shooter.set(0.005 * self.shooterPID.calculate(self.shooterEncoder.getVelocity(),
-                                                               3500) + self.shooterVValueSub.get())
-            self.shooterHelper.set(-0.005 * self.shooterHelperPID.calculate(self.shooterHelperEncoder.getVelocity(),
-                                                                            3500) - self.shooterHelperVValueSub.get())
+            self.shooter.set(0.00095 * self.shooterPID.calculate(self.shooterEncoder.getVelocity(),
+                                                                 5000) + self.shooterVValueSub.get())
+            self.shooterHelper.set(-0.00095 * self.shooterHelperPID.calculate(self.shooterHelperEncoder.getVelocity(),
+                                                                              5000) - self.shooterHelperVValueSub.get())
         else:
             self.shooter.set(0)
             self.shooterHelper.set(0)
 
         # If Wrist in position start arm movement
-        if self.wristEncoder.get() <= -4400:
+        if self.wristEncoder.get() <= -4670:
             self.autoArmDownStart = True
 
         # If Arm in position after wrist is in position shoot
@@ -452,20 +446,16 @@ class MyRobot(commands2.TimedCommandRobot):
                 self.intake.set(1)  # Spit note out of jaws
         else:
             if not self.autoEndWristVal:
-                self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4500))
+                self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4670))
 
         if self.runAuto and (self.autoRan is False):
-<<<<<<< Updated upstream
-            self.getAutonomousCommand().schedule()
-=======
             if self.getAutonomousCommand() is not None:
                 self.getAutonomousCommand().schedule()
             else:
-                self.mecanum.rearLeftMotor.set(-0.5)
-                self.mecanum.rearRightMotor.set(-0.5)
-                self.mecanum.frontRightMotor.set(-0.5)
-                self.mecanum.frontLeftMotor.set(-0.5)
->>>>>>> Stashed changes
+                self.mecanum.rearLeftMotor.set(0.5)
+                self.mecanum.rearRightMotor.set(0.5)
+                self.mecanum.frontRightMotor.set(0.5)
+                self.mecanum.frontLeftMotor.set(0.5)
             self.autoRan = True
 
         if self.runAuto:
@@ -473,19 +463,19 @@ class MyRobot(commands2.TimedCommandRobot):
                 self.intake.set(-0.6)
             else:
                 self.shooterOnAuto = True
-                self.mecanum.rearLeftMotor.set(0.125)
-                self.mecanum.rearRightMotor.set(0.125)
-                self.mecanum.frontRightMotor.set(0.125)
-                self.mecanum.frontLeftMotor.set(0.125)
+                self.mecanum.rearLeftMotor.set(-0.125)
+                self.mecanum.rearRightMotor.set(-0.125)
+                self.mecanum.frontRightMotor.set(-0.125)
+                self.mecanum.frontLeftMotor.set(-0.125)
                 if self.autoEndWristVal:
-                    self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4500))
+                    self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4670))
                 if (self.wristEncoder.get() <= -4400) and self.autoEndWristVal:
                     self.intake.set(1)
                     if self.intakeEncoder.getPosition() > 200:
-                        self.mecanum.rearLeftMotor.set(-0.25)
-                        self.mecanum.rearRightMotor.set(-0.25)
-                        self.mecanum.frontRightMotor.set(-0.25)
-                        self.mecanum.frontLeftMotor.set(-0.25)
+                        self.mecanum.rearLeftMotor.set(0.25)
+                        self.mecanum.rearRightMotor.set(0.25)
+                        self.mecanum.frontRightMotor.set(0.25)
+                        self.mecanum.frontLeftMotor.set(0.25)
                 else:
                     self.intakeEncoder.setPosition(0)
                     self.intake.set(0)
@@ -512,21 +502,19 @@ class MyRobot(commands2.TimedCommandRobot):
             else:
                 self.armEncoderReseting = False
                 self.arm.set(self.armPID.calculate(self.armBuiltinEncoder.getPosition(), 120))
-
-<<<<<<< Updated upstream
-=======
         if self.runAuto and (self.getAutonomousCommand() is None):
-            self.mecanum.rearLeftMotor.set(-0.25)
-            self.mecanum.rearRightMotor.set(-0.25)
-            self.mecanum.frontRightMotor.set(-0.25)
-            self.mecanum.frontLeftMotor.set(-0.25)
-            self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4500))
+            self.mecanum.rearLeftMotor.set(0.25)
+            self.mecanum.rearRightMotor.set(0.25)
+            self.mecanum.frontRightMotor.set(0.25)
+            self.mecanum.frontLeftMotor.set(0.25)
+            self.wrist.set(-0.004 * self.wristPID.calculate(self.wristEncoder.get(), -4670))
 
     def autonomousExit(self):
+        self.intake.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
         self.wristPID.setP(0.08)
 
->>>>>>> Stashed changes
     def teleopInit(self):
+        self.intake.setIdleMode(rev.CANSparkMax.IdleMode.kBrake)
         self.robotTopEnabledNetwork.set(True)
         # Enable Top Control
         self.disableTopPower = False
@@ -565,40 +553,35 @@ class MyRobot(commands2.TimedCommandRobot):
 
     def teleopPeriodic(self):
         """Runs the motors with Mecanum drive."""
-<<<<<<< Updated upstream
         # Break Button (Driver 1 B)
-        if self.driver1.getBButton():
+        if self.driver1.getSquareButtonPressed():
             self.mecanum.coastMotors()
-=======
+        else:
+            self.mecanum.breakMotors()
         # Reset Gyro (Driver 1 X)
-        if self.driver1.getXButtonReleased():
+        if self.driver1.getCircleButtonReleased():
             self.gyro.reset()
 
         # Solenoid Control (Driver 1 Y+A)
-        if self.driver1.getYButtonReleased():
+        if self.driver1.getTriangleButtonReleased():
             self.solenoidRed.set(False)
             self.solenoidBlue.set(True)
-        if self.driver1.getAButtonPressed():
+        if self.driver1.getCrossButtonPressed():
             self.solenoidRed.set(True)
             self.solenoidBlue.set(False)
 
-        # Coast Button (Driver 1 B)
-        self.mecanum.coastMotors()
-
         # Drive-Base Control
-
-        if self.driver1.getLeftStickButtonReleased():
+        if self.driver1.getTouchpad():
             self.stickXYToggle = not self.stickXYToggle
 
         if self.stickXYToggle:
             y = self.driver1.getLeftY()
             x = self.driver1.getLeftX()
             rx = -self.driver1.getRightX()
->>>>>>> Stashed changes
         else:
-            x = self.driver1.getLeftY()
-            y = -self.driver1.getLeftX()
-            rx = -self.driver1.getRightX()
+            x = -self.driver1.getLeftY()
+            y = self.driver1.getLeftX()
+            rx = self.driver1.getRightX()
 
         Idiot_y = ((math.pow(y, 3)*0.5) + (y*0.5))
         Idiot_x = ((math.pow(x, 3)*0.5) + (x*0.5))
@@ -621,19 +604,19 @@ class MyRobot(commands2.TimedCommandRobot):
             self.disableTopPower = False
 
         # Intake Button
-        if self.driver2.getBButtonReleased():
+        if self.driver2.getCircleButtonReleased():
             self.actuatorMode.toggleIntaking()
 
         # Amp Button
-        if self.driver2.getAButtonReleased():
+        if self.driver2.getCrossButtonReleased():
             self.actuatorMode.toggleAmping()
 
         # Shoot Button
-        if self.driver2.getXButtonReleased():
+        if self.driver2.getSquareButtonReleased():
             self.actuatorMode.toggleShooting()
 
         # Reset Button
-        if self.driver2.getYButtonReleased():
+        if self.driver2.getTriangleButtonReleased():
             self.actuatorMode.toggleReset()
 
         # Actuator Mode Logic
@@ -641,10 +624,10 @@ class MyRobot(commands2.TimedCommandRobot):
             self.currentArmPosition = 0  # Arm Down
             self.currentWristPosition = 1  # Idle Wrist Position
             self.shooterOn = False
-            if self.driver2.getRightTriggerAxis() > self.driver2.getLeftTriggerAxis():
-                self.intake.set(self.driver2.getRightTriggerAxis())
+            if ((self.driver2.getR2Axis() + 1)/2) > ((self.driver2.getL2Axis()+1)/2):
+                self.intake.set((self.driver2.getR2Axis() + 1)/2)
             else:
-                self.intake.set(-self.driver2.getLeftTriggerAxis())
+                self.intake.set(-(self.driver2.getL2Axis()+1)/2)
 
             # Reset TeleAuto Vars
             self.teleautoArmUp = False
@@ -675,14 +658,10 @@ class MyRobot(commands2.TimedCommandRobot):
             if self.teleautoArmUp and self.wristEncoder.get() >= -1100:
                 self.teleautoWristOut = True
 
-            if self.driver2.getRightTriggerAxis() > self.driver2.getLeftTriggerAxis():
-                self.intake.set(self.driver2.getRightTriggerAxis())
+            if ((self.driver2.getR2Axis() + 1)/2) > ((self.driver2.getL2Axis() + 1)/2):
+                self.intake.set((self.driver2.getR2Axis() + 1)/2)
             else:
-                self.intake.set(-self.driver2.getLeftTriggerAxis())
-
-            if self.teleautoArmUp and self.teleautoWristOut:  # If Arm up and wrist position is flipped then drop note
-                # TODO: Add driver 2 rumble
-                pass
+                self.intake.set(-(self.driver2.getL2Axis() + 1)/2)
 
             # TODO: If intake/outake spins for x amount of revolutions set mode to idle
         elif self.actuatorMode.Mode == self.actuatorMode.Reset:
@@ -700,7 +679,6 @@ class MyRobot(commands2.TimedCommandRobot):
             self.intake.set(0)
             self.arm.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
             self.wrist.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
-            self.intake.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
         else:
             # Safety Switches and Arm
             if self.armDownLimitSwitch.get() is False:
@@ -720,8 +698,8 @@ class MyRobot(commands2.TimedCommandRobot):
 
             # Shooter Feedback and Feedforward Controller
             if self.shooterOn:
-                self.shooter.set(0.005*self.shooterPID.calculate(self.shooterEncoder.getVelocity(), 3500) + self.shooterVValueSub.get())
-                self.shooterHelper.set(-0.005*self.shooterHelperPID.calculate(self.shooterHelperEncoder.getVelocity(), 3500) - self.shooterHelperVValueSub.get())
+                self.shooter.set(0.00095*self.shooterPID.calculate(self.shooterEncoder.getVelocity(), 5000) + self.shooterVValueSub.get())
+                self.shooterHelper.set(-0.00095*self.shooterHelperPID.calculate(self.shooterHelperEncoder.getVelocity(), 5000) - self.shooterHelperVValueSub.get())
             else:
                 self.shooter.set(0)
                 self.shooterHelper.set(0)
@@ -732,7 +710,7 @@ class MyRobot(commands2.TimedCommandRobot):
 
     def disabledInit(self):
 
-        # self.arm.setIdleMode(self.arm.IdleMode.kCoast)
+        self.arm.setIdleMode(self.arm.IdleMode.kCoast)
         self.compressor.disable()
         self.arm.set(0)
         self.wrist.set(0)
@@ -778,6 +756,7 @@ class MyRobot(commands2.TimedCommandRobot):
         self.arm.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
         self.wrist.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
         self.intake.setIdleMode(rev.CANSparkMax.IdleMode.kCoast)
+        self.mecanum.coastMotors()
         self.compressor.enableDigital()
 
     def testPeriodic(self):

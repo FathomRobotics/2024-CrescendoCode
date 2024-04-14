@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.4586272249467593,
-        "y": 4.084914323674802
+        "x": 7.638772200621325,
+        "y": 0.9965612238916797
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.6653250229638399,
-        "y": 4.213184580214449
+        "x": 6.845469998638405,
+        "y": 1.1248314804313266
       },
       "isLocked": false,
       "linkedName": "StageNote"
@@ -40,8 +40,8 @@
   "globalConstraints": {
     "maxVelocity": 2.0,
     "maxAcceleration": 2.0,
-    "maxAngularVelocity": 540.0,
-    "maxAngularAcceleration": 720.0
+    "maxAngularVelocity": 180.0,
+    "maxAngularAcceleration": 360.0
   },
   "goalEndState": {
     "velocity": 0,

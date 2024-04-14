@@ -12,27 +12,15 @@
     "data": {
       "commands": [
         {
-          "type": "path",
-          "data": {
-            "pathName": "CenterToNote"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Center2"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "intakeOff"
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "endGame"
+            "pathName": "CTC"
           }
         },
         {

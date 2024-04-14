@@ -6,6 +6,7 @@
 import commands2
 import pathplannerlib.logging
 import pathplannerlib.path
+import rev
 import wpilib.drive
 import navx
 import wpimath.controller
@@ -34,7 +35,7 @@ class Drivetrain:
     """Represents a differential drive style drivetrain."""
 
     kMaxSpeed = 3.0  # 3 meters per second
-    kMaxAngularSpeed = math.pi*0.5
+    kMaxAngularSpeed = math.pi
 
     def resetGryoThread(self):
         time.sleep(1)
@@ -43,30 +44,35 @@ class Drivetrain:
     def __init__(self, frontLeftMotorEncoder, rearLeftMotorEncoder, frontRightMotorEncoder, rearRightMotorEncoder, kPn, kIn, kDn, kMn):
         self.kMaxSpeed = kMn.get()
         self.field = wpilib.Field2d()
-        self.rearLeftMotor = phoenix5.WPI_TalonSRX(1)
-        self.rearRightMotor = phoenix5.WPI_TalonSRX(2)
-        self.frontRightMotor = phoenix5.WPI_TalonSRX(3)
-        self.frontLeftMotor = phoenix5.WPI_TalonSRX(4)
+        self.rearLeftMotor = rev.CANSparkMax(1, type=rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.rearRightMotor = rev.CANSparkMax(2, type=rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.frontRightMotor = rev.CANSparkMax(3, type=rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.frontLeftMotor = rev.CANSparkMax(4, type=rev.CANSparkLowLevel.MotorType.kBrushless)
+
+        self.rearLeftMotor.setOpenLoopRampRate(0.25)
+        self.rearRightMotor.setOpenLoopRampRate(0.25)
+        self.frontRightMotor.setOpenLoopRampRate(0.25)
+        self.frontLeftMotor.setOpenLoopRampRate(0.25)
 
         self.frontLeftMotorEncoder = frontLeftMotorEncoder
         self.rearLeftMotorEncoder = rearLeftMotorEncoder
         self.frontRightMotorEncoder = frontRightMotorEncoder
         self.rearRightMotorEncoder = rearRightMotorEncoder
 
-        frontLeftLocation = Translation2d(0.2713, 0.2715)
-        frontRightLocation = Translation2d(0.2713, -0.2715)
-        rearLeftLocation = Translation2d(-0.2713, 0.2715)
-        rearRightLocation = Translation2d(-0.2713, -0.2715)
+        frontRightLocation = Translation2d(0.2713, 0.2715)
+        frontLeftLocation = Translation2d(0.2713, -0.2715)
+        rearRightLocation = Translation2d(-0.2713, 0.2715)
+        rearLeftLocation = Translation2d(-0.2713, -0.2715)
 
         # kP = 0.005 and kI 0.0001 Bad
         self.kP = 3
         self.kI = 0
         self.kD = 0
         self.feedforwardValue = 0
-        self.frontLeftPIDController = wpimath.controller.PIDController(self.kP, self.kI, self.kD)
-        self.frontRightPIDController = wpimath.controller.PIDController(self.kP, self.kI, self.kD)
-        self.rearLeftPIDController = wpimath.controller.PIDController(self.kP, self.kI, self.kD)
-        self.rearRightPIDController = wpimath.controller.PIDController(self.kP, self.kI, self.kD)
+        self.frontLeftPIDController = wpimath.controller.PIDController(3, 0, 0)
+        self.frontRightPIDController = wpimath.controller.PIDController(3, 0, 0)
+        self.rearLeftPIDController = wpimath.controller.PIDController(3, 0, 0)
+        self.rearRightPIDController = wpimath.controller.PIDController(3, 0, 0)
 
         self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
         gyroThread = threading.Thread(target=self.resetGryoThread)
@@ -88,10 +94,10 @@ class Drivetrain:
         # We need to invert one side of the drivetrain so that positive voltages
         # result in both sides moving forward. Depending on how your robot's
         # gearbox is constructed, you might have to invert the left side instead.
-        self.rearLeftMotor.setInverted(True)
-        self.frontLeftMotor.setInverted(True)
-        self.rearRightMotor.setInverted(False)
-        self.frontRightMotor.setInverted(False)
+        self.rearLeftMotor.setInverted(False)
+        self.frontLeftMotor.setInverted(False)
+        self.rearRightMotor.setInverted(True)
+        self.frontRightMotor.setInverted(True)
 
         AutoBuilder.configureHolonomic(
             self.getPose,  # Robot pose supplier
@@ -99,8 +105,8 @@ class Drivetrain:
             self.getCurrentSpeeds,  # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
             self.driveRobotRelative,  # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
             HolonomicPathFollowerConfig(  # HolonomicPathFollowerConfig, this should likely live in your Constants class
-                PIDConstants(self.kP, 0.0, 0.0),  # Translation PID constants
-                PIDConstants(0.005, kIn.get(), kDn.get()),  # Rotation PID constants
+                PIDConstants(3, 0, 0),  # Translation PID constants
+                PIDConstants(-1, 0, 0),  # Rotation PID constants
                 self.kMaxSpeed,  # Max module speed, in m/s
                 0.381,  # Drive base radius in meters. Distance from robot center to furthest module.
                 ReplanningConfig()  # Default path replanning config. See the API for the options here
@@ -207,13 +213,13 @@ class Drivetrain:
         self.odometry.update(self.gyro.getRotation2d(), self.getCurrentDistances())
 
     def coastMotors(self):
-        self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-        self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-        self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
-        self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Coast)
+        self.frontLeftMotor.setIdleMode(mode=rev.CANSparkMax.IdleMode.kCoast)
+        self.rearLeftMotor.setIdleMode(mode=rev.CANSparkMax.IdleMode.kCoast)
+        self.frontRightMotor.setIdleMode(mode=rev.CANSparkMax.IdleMode.kCoast)
+        self.rearRightMotor.setIdleMode(mode=rev.CANSparkMax.IdleMode.kCoast)
 
     def breakMotors(self):
-        self.frontLeftMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
-        self.rearLeftMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
-        self.frontRightMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
-        self.rearRightMotor.setNeutralMode(phoenix5.NeutralMode.Brake)
+        self.frontLeftMotor.setIdleMode(mode=rev.CANSparkMax.IdleMode.kBrake)
+        self.rearLeftMotor.setIdleMode(mode=rev.CANSparkMax.IdleMode.kBrake)
+        self.frontRightMotor.setIdleMode(mode=rev.CANSparkMax.IdleMode.kBrake)
+        self.rearRightMotor.setIdleMode(mode=rev.CANSparkMax.IdleMode.kBrake)

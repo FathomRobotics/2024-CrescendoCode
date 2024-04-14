@@ -12,27 +12,15 @@
     "data": {
       "commands": [
         {
-          "type": "path",
-          "data": {
-            "pathName": "Stage2"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "StageToNote"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "intakeOff"
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "endGame"
+            "pathName": "StageToNote"
           }
         },
         {

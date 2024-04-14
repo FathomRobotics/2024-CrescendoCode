@@ -16,10 +16,7 @@ class RobotContainer:
         NamedCommands.registerCommand("endGame", EndRobotAuto(self.wristFunction))
         self.autoChooser = wpilib.SendableChooser()
         self.autoChooser.setDefaultOption("Amp Side", pathplannerlib.auto.AutoBuilder.buildAuto("AmpAuto"))
-<<<<<<< Updated upstream
-=======
         self.autoChooser.addOption("Shoot and Stay", None)
->>>>>>> Stashed changes
         self.autoChooser.addOption("Center Auto", pathplannerlib.auto.AutoBuilder.buildAuto("CenterAuto"))
         self.autoChooser.addOption("Stage Side", pathplannerlib.auto.AutoBuilder.buildAuto("StageAuto"))
         self.autoChooser.addOption("Amp Side", pathplannerlib.auto.AutoBuilder.buildAuto("AmpAuto"))
