@@ -216,10 +216,10 @@ class MyRobot(commands2.TimedCommandRobot):
         self.intake.setSmartCurrentLimit(25)
         self.shooter.setSmartCurrentLimit(65)
         self.shooterHelper.setSmartCurrentLimit(65)
-        self.mecanum.frontLeftMotor.setSmartCurrentLimit(95)
-        self.mecanum.rearLeftMotor.setSmartCurrentLimit(95)
-        self.mecanum.frontRightMotor.setSmartCurrentLimit(95)
-        self.mecanum.rearRightMotor.setSmartCurrentLimit(95)
+        self.mecanum.frontLeftMotor.setSmartCurrentLimit(80)
+        self.mecanum.rearLeftMotor.setSmartCurrentLimit(80)
+        self.mecanum.frontRightMotor.setSmartCurrentLimit(80)
+        self.mecanum.rearRightMotor.setSmartCurrentLimit(80)
 
         # Enbeded Encoders
         self.intakeEncoder = self.intake.getEncoder()
