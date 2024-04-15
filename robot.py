@@ -178,14 +178,9 @@ class MyRobot(commands2.TimedCommandRobot):
         )
 
         self.robotContainer = RobotContainer(self.mecanum, self.intakeOffAutoFunction, self.autoEndWristFunction, self.ender2)
-        # self.mecanum.resetPose(wpimath.geometry.Pose2d(2.84, 5.52, 0))
-        # Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
-        self.xspeedLimiter = wpimath.filter.SlewRateLimiter(3)
-        self.yspeedLimiter = wpimath.filter.SlewRateLimiter(3)
-        self.rotLimiter = wpimath.filter.SlewRateLimiter(3)
 
         # NavX Initialization
-        self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
+        # self.gyro = navx.AHRS(wpilib.SPI.Port.kMXP)
         gyroThread = threading.Thread(target=self.resetGryoThread)
         gyroThread.run()
 
@@ -203,7 +198,7 @@ class MyRobot(commands2.TimedCommandRobot):
         self.powerDistribution = wpilib.PowerDistribution(module=6, moduleType=wpilib.PowerDistribution.ModuleType.kRev)
 
         # Control Devices
-        self.pidgen = phoenix5.sensors.Pigeon2(5)
+        self.gyro = phoenix5.sensors.WPI_PigeonIMU(5)
         self.intake = rev.CANSparkMax(7, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.arm = rev.CANSparkMax(8, type=rev.CANSparkLowLevel.MotorType.kBrushless)
         self.wrist = rev.CANSparkMax(9, type=rev.CANSparkLowLevel.MotorType.kBrushless)
